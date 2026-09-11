@@ -1,7 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panier Commun</title>
+<meta name="description" content="Recettes, liste de courses triée par rayon et repas de la semaine, partagés entre deux téléphones.">
+<meta name="theme-color" content="#0E5C55" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1312" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Panier">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Karla:ital,wght@0,400;0,500;0,700;1,400&family=DM+Mono:wght@400;500&display=swap">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+</head>
+<body>
 <style>
 :root{
   --ground:#EFF2EF;
@@ -101,13 +123,13 @@ button{cursor:pointer;background:none;border:none;padding:0}
 .sync[data-state="local"] .dot{background:var(--citron)}
 .sync[data-state="local"]{color:var(--citron);border-color:var(--citron-soft)}
 
-.viewhead{display:flex;align-items:center;gap:10px;margin-top:10px}
+.viewhead{display:flex;align-items:center;gap:8px 10px;margin-top:10px;flex-wrap:wrap}
 .viewhead h2{
   font-family:"Bricolage Grotesque","Karla",sans-serif;
-  font-size:15px;font-weight:500;margin:0;letter-spacing:.01em;color:var(--muted);
+  font-size:15px;font-weight:500;margin:0;letter-spacing:.01em;color:var(--muted);white-space:nowrap;
 }
 .viewhead .count{
-  font-family:"DM Mono",ui-monospace,monospace;font-size:12px;color:var(--muted);
+  font-family:"DM Mono",ui-monospace,monospace;font-size:12px;color:var(--muted);white-space:nowrap;
   background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;
 }
 .headactions{margin-left:auto;display:flex;gap:8px}
@@ -293,6 +315,29 @@ button{cursor:pointer;background:none;border:none;padding:0}
   display:grid;place-items:center;font-family:"DM Mono",monospace;
 }
 
+/* ---------- sync sheet ---------- */
+.syncstate{margin:0 0 16px;font-size:14px;line-height:1.55;color:var(--muted)}
+.syncstate.ok{color:var(--ink)}
+.setup{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);margin-bottom:18px;overflow:hidden}
+.setup summary{
+  padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--accent);
+  letter-spacing:.02em;list-style:none;display:flex;align-items:center;gap:7px;
+}
+.setup summary::before{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+.setup[open] summary::before{transform:rotate(45deg)}
+.setup summary::-webkit-details-marker{display:none}
+.setup-steps{margin:0;padding:0 16px 14px 32px;font-size:13.5px;line-height:1.6;color:var(--ink)}
+.setup-steps li{margin-bottom:9px}
+.setup-steps b{font-weight:700}
+.setup-steps pre{
+  font-family:"DM Mono",ui-monospace,monospace;font-size:11.5px;line-height:1.45;
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:9px 11px;margin:7px 0 0;overflow-x:auto;
+}
+.codewrap{display:flex;gap:8px}
+.codewrap input{flex:1;min-width:0}
+.wide{width:100%;justify-content:center}
+
 /* ---------- sheets ---------- */
 .scrim{
   position:fixed;inset:0;z-index:50;background:rgba(10,18,16,.5);
@@ -387,7 +432,7 @@ button{cursor:pointer;background:none;border:none;padding:0}
   <header class="topbar">
     <div class="brandrow">
       <h1 class="brand">Panier Commun</h1>
-      <span class="sync" id="sync" data-state="wait"><span class="dot"></span><span id="syncLabel">Connexion</span></span>
+      <button class="sync" id="sync" data-state="local" data-act="sync" title="Synchronisation"><span class="dot"></span><span id="syncLabel">Ce téléphone</span></button>
     </div>
     <div class="viewhead">
       <h2 id="viewTitle">Recettes</h2>
@@ -477,9 +522,24 @@ const CATEGORIES = ["Plat","Entrée","Dessert","Petit-déj","Apéro","Accompagne
 /* Recettes de départ : uniquement pour le mode hors-ligne, quand la
    base partagée n'est pas disponible dans cette vue. */
 const STARTERS = [
-  {id:"gratin-courgettes",name:"Gratin de courgettes au chèvre",category:"Plat",servings:4,minutes:45,
+  {id:"gratin-courgettes-chevre",name:"Gratin de courgettes au chèvre",category:"Plat",servings:4,minutes:45,inList:false,
    ingredients:[{name:"Courgettes",qty:4,unit:"",rayon:"fruits"},{name:"Bûche de chèvre",qty:150,unit:"g",rayon:"cremerie"},{name:"Crème fraîche",qty:20,unit:"cl",rayon:"cremerie"},{name:"Œufs",qty:2,unit:"",rayon:"cremerie"},{name:"Chapelure",qty:2,unit:"cs",rayon:"boulangerie"},{name:"Huile d'olive",qty:1,unit:"cs",rayon:"epicerie"}],
-   steps:["Couper les courgettes en rondelles et les faire revenir 10 min à l'huile d'olive.","Battre les œufs avec la crème, saler, poivrer.","Alterner courgettes et rondelles de chèvre dans un plat, verser l'appareil.","Parsemer de chapelure et enfourner 30 min à 180 °C."]}
+   steps:["Couper les courgettes en rondelles et les faire revenir 10 min à l'huile d'olive.","Battre les œufs avec la crème, saler, poivrer, râper un peu de muscade.","Alterner courgettes et rondelles de chèvre dans un plat, verser l'appareil.","Parsemer de chapelure et enfourner 30 min à 180 °C."]},
+  {id:"poulet-basquaise",name:"Poulet basquaise",category:"Plat",servings:4,minutes:60,inList:false,
+   ingredients:[{name:"Cuisses de poulet",qty:4,unit:"",rayon:"boucherie"},{name:"Poivrons",qty:3,unit:"",rayon:"fruits"},{name:"Oignons",qty:2,unit:"",rayon:"fruits"},{name:"Ail",qty:2,unit:"gousses",rayon:"fruits"},{name:"Tomates concassées",qty:1,unit:"boîte",rayon:"epicerie"},{name:"Piment d'Espelette",qty:1,unit:"pincée",rayon:"epicerie"},{name:"Riz",qty:300,unit:"g",rayon:"epicerie"}],
+   steps:["Dorer les cuisses de poulet de tous côtés dans une cocotte, réserver.","Faire suer oignons, poivrons en lanières et ail 10 min.","Ajouter les tomates, le piment, remettre le poulet, saler.","Couvrir et laisser mijoter 40 min à feu doux.","Servir avec le riz."]},
+  {id:"dahl-lentilles-corail",name:"Dahl de lentilles corail",category:"Plat",servings:4,minutes:35,inList:false,
+   ingredients:[{name:"Lentilles corail",qty:250,unit:"g",rayon:"epicerie"},{name:"Lait de coco",qty:40,unit:"cl",rayon:"epicerie"},{name:"Oignon",qty:1,unit:"",rayon:"fruits"},{name:"Gingembre frais",qty:1,unit:"",rayon:"fruits"},{name:"Curry",qty:2,unit:"cc",rayon:"epicerie"},{name:"Curcuma",qty:1,unit:"cc",rayon:"epicerie"},{name:"Épinards frais",qty:200,unit:"g",rayon:"fruits"},{name:"Citron",qty:1,unit:"",rayon:"fruits"}],
+   steps:["Faire revenir l'oignon et le gingembre râpé, ajouter les épices 1 min.","Verser les lentilles rincées, le lait de coco et 30 cl d'eau.","Laisser cuire 20 min à couvert en remuant de temps en temps.","Jeter les épinards dedans en fin de cuisson, presser le citron, saler."]},
+  {id:"quiche-lorraine",name:"Quiche lorraine",category:"Plat",servings:6,minutes:50,inList:false,
+   ingredients:[{name:"Pâte brisée",qty:1,unit:"",rayon:"cremerie"},{name:"Lardons",qty:200,unit:"g",rayon:"boucherie"},{name:"Œufs",qty:3,unit:"",rayon:"cremerie"},{name:"Crème fraîche",qty:20,unit:"cl",rayon:"cremerie"},{name:"Lait",qty:10,unit:"cl",rayon:"cremerie"},{name:"Gruyère râpé",qty:100,unit:"g",rayon:"cremerie"}],
+   steps:["Étaler la pâte dans un moule, piquer le fond à la fourchette.","Faire revenir les lardons à sec, les égoutter et les répartir.","Battre œufs, crème et lait, poivrer généreusement, ajouter le gruyère.","Verser sur les lardons et cuire 35 min à 190 °C."]},
+  {id:"pates-saumon-epinards",name:"Pâtes au saumon et épinards",category:"Plat",servings:4,minutes:25,inList:false,
+   ingredients:[{name:"Tagliatelles",qty:400,unit:"g",rayon:"epicerie"},{name:"Pavés de saumon",qty:400,unit:"g",rayon:"boucherie"},{name:"Pousses d'épinard",qty:150,unit:"g",rayon:"fruits"},{name:"Crème fraîche",qty:20,unit:"cl",rayon:"cremerie"},{name:"Échalote",qty:1,unit:"",rayon:"fruits"},{name:"Citron",qty:1,unit:"",rayon:"fruits"},{name:"Parmesan",qty:50,unit:"g",rayon:"cremerie"}],
+   steps:["Cuire les tagliatelles al dente.","Faire fondre l'échalote ciselée, ajouter le saumon en cubes 4 min.","Verser la crème, le zeste et le jus de citron, laisser épaissir.","Ajouter les épinards, mélanger aux pâtes, parsemer de parmesan."]},
+  {id:"crumble-pommes",name:"Crumble aux pommes",category:"Dessert",servings:6,minutes:50,inList:false,
+   ingredients:[{name:"Pommes",qty:6,unit:"",rayon:"fruits"},{name:"Farine",qty:150,unit:"g",rayon:"epicerie"},{name:"Beurre",qty:100,unit:"g",rayon:"cremerie"},{name:"Sucre roux",qty:100,unit:"g",rayon:"sucre"},{name:"Poudre d'amandes",qty:50,unit:"g",rayon:"sucre"},{name:"Cannelle",qty:1,unit:"cc",rayon:"epicerie"}],
+   steps:["Éplucher et couper les pommes en dés, les étaler dans un plat avec la cannelle.","Sabler du bout des doigts farine, beurre froid, sucre et poudre d'amandes.","Émietter la pâte sur les pommes.","Cuire 40 min à 180 °C jusqu'à ce que le dessus soit doré."]}
 ];
 
 /* --------------------------- utilitaires --------------------------- */
@@ -497,11 +557,16 @@ function fmtQty(n){
   return String(r).replace(".",",");
 }
 function guessRayon(name){
+  /* Le mot le plus long gagne, avec une prime au mot de tête : « jus d'orange »
+     part aux boissons, « lait de coco » reste en épicerie. */
   const n = " " + norm(name) + " ";
-  let best = "divers", len = 0;
+  let best = "divers", score = 0;
   for(const [rayon, words] of Object.entries(GUESS)){
     for(const w of words){
-      if(n.includes(w) && w.length > len){ best = rayon; len = w.length; }
+      const at = n.indexOf(w);
+      if(at < 0) continue;
+      const s = w.length + (at === 1 ? 4 : 0);
+      if(s > score){ best = rayon; score = s; }
     }
   }
   return best;
@@ -533,61 +598,196 @@ function toast(msg){
   toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
 }
 
-/* ------------------------------ store ------------------------------ */
+/* ------------------------------ synchro ------------------------------
+   Les trois collections vivent en local (localStorage) et, quand un foyer
+   est configuré, dans une base Firebase Realtime Database via son API REST :
+   flux d'événements en lecture (EventSource), PUT par document en écriture.
+   Hors ligne, les écritures s'empilent dans une file et repartent au retour
+   du réseau. Chaque document porte un updatedAt : le plus récent gagne.
+--------------------------------------------------------------------- */
 const COLS = ["recipes","shopping","plan"];
+const LS_DATA = "panier.data.v1";
+const LS_CFG  = "panier.foyer.v1";
 const state = { recipes:new Map(), shopping:new Map(), plan:new Map(), tab:"recipes", editing:null, ready:false };
-let store = null;
+
+let localData = {recipes:{}, shopping:{}, plan:{}};
+let queue = [];
+let cfg = {url:"", code:""};
+let es = null, esState = "off", firstSync = false, retryTimer = null;
 
 function clean(body){
   const out = {};
   for(const [k,v] of Object.entries(body)){ if(k!=="id" && v!==undefined) out[k]=v; }
   return out;
 }
-function liveStore(db){
-  return {
-    kind:"live",
-    watch(col, cb){
-      return db.collection(col).onSnapshot(snap=>{
-        const m = new Map();
-        snap.docs.forEach(d=>{ if(d.exists) m.set(d.id, Object.assign({}, d.data(), {id:d.id})); });
-        cb(m);
-      }, err=>{
-        setSync("local", "Hors ligne");
-        if(err && err.code === "revoked") toast("Accès à la base retiré.");
+function loadLocal(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(LS_DATA) || "null");
+    if(raw && raw.data){ localData = Object.assign({recipes:{},shopping:{},plan:{}}, raw.data); queue = raw.queue || []; }
+  }catch(e){}
+  try{ cfg = JSON.parse(localStorage.getItem(LS_CFG) || "null") || cfg; }catch(e){}
+  const cutoff = Date.now() - 30*24*3600*1000;
+  for(const col of COLS){
+    for(const [id,d] of Object.entries(localData[col]||{})){
+      if(d && d.deleted && (d.updatedAt||0) < cutoff) delete localData[col][id];
+    }
+  }
+}
+function persist(){
+  try{ localStorage.setItem(LS_DATA, JSON.stringify({data:localData, queue})); }
+  catch(e){ toast("Mémoire du téléphone pleine : videz des articles cochés."); }
+}
+function visible(col){
+  const m = new Map();
+  for(const [id,d] of Object.entries(localData[col]||{})){
+    if(d && !d.deleted) m.set(id, Object.assign({}, d, {id}));
+  }
+  return m;
+}
+function emit(col){
+  state[col] = visible(col);
+  state.ready = true;
+  render();
+}
+function save(col, id, body){
+  localData[col][id] = Object.assign(clean(body), {updatedAt:Date.now()});
+  persist(); emit(col); pushDoc(col, id);
+  return Promise.resolve();
+}
+function drop(col, id){
+  localData[col][id] = {deleted:true, updatedAt:Date.now()};
+  persist(); emit(col); pushDoc(col, id);
+  return Promise.resolve();
+}
+
+/* ---- écritures distantes ---- */
+function roomUrl(suffix){
+  return cfg.url.replace(/\/+$/,"") + "/f/" + cfg.code + (suffix||"") + ".json";
+}
+function pushDoc(col, id){
+  if(!cfg.url || !cfg.code) return;
+  if(!queue.some(q=>q.col===col && q.id===id)) queue.push({col, id});
+  persist(); flush();
+}
+let flushing = false;
+async function flush(){
+  if(flushing || !cfg.url || !cfg.code || !queue.length) return;
+  if(navigator.onLine === false){ updateSync(); return; }
+  flushing = true;
+  try{
+    while(queue.length){
+      const {col, id} = queue[0];
+      const doc = localData[col][id];
+      if(!doc){ queue.shift(); continue; }
+      const res = await fetch(roomUrl("/" + col + "/" + id), {
+        method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(doc)
       });
-    },
-    put(col,id,body){ return db.collection(col).doc(id).set(clean(body)); },
-    remove(col,id){ return db.collection(col).doc(id).delete(); }
-  };
+      if(!res.ok){
+        if(res.status === 401 || res.status === 403) toast("Écriture refusée : vérifiez les règles de la base.");
+        break;
+      }
+      queue.shift();
+    }
+  }catch(e){ /* hors ligne : on retentera */ }
+  flushing = false;
+  persist(); updateSync();
+  if(queue.length && !retryTimer){
+    retryTimer = setTimeout(()=>{ retryTimer = null; flush(); }, 15000);
+  }
 }
-function localStore(){
-  const subs = {};
-  const read = col => {
-    try{ return new Map(Object.entries(JSON.parse(localStorage.getItem("panier:"+col) || "{}"))); }
-    catch(e){ return new Map(); }
-  };
-  const write = (col, map) => {
-    try{ localStorage.setItem("panier:"+col, JSON.stringify(Object.fromEntries(map))); }catch(e){}
-    if(subs[col]) subs[col](new Map(map));
-  };
-  return {
-    kind:"local",
-    watch(col, cb){ subs[col] = cb; setTimeout(()=>cb(read(col)), 0); return ()=>{ delete subs[col]; }; },
-    put(col,id,body){ const m = read(col); m.set(id, Object.assign(clean(body), {id})); write(col,m); return Promise.resolve(); },
-    remove(col,id){ const m = read(col); m.delete(id); write(col,m); return Promise.resolve(); }
-  };
+window.addEventListener("online", ()=>{ flush(); connect(); });
+window.addEventListener("offline", updateSync);
+
+/* ---- lecture temps réel ---- */
+function mergeDoc(col, id, doc){
+  const cur = localData[col][id];
+  if(doc == null){
+    if(cur){ delete localData[col][id]; return true; }
+    return false;
+  }
+  if(typeof doc !== "object") return false;
+  if(cur && (cur.updatedAt||0) > (doc.updatedAt||0)) return false;
+  if(cur && JSON.stringify(cur) === JSON.stringify(doc)) return false;
+  localData[col][id] = doc;
+  return true;
 }
-function setSync(kind, label){
-  const el = $("#sync");
-  el.dataset.state = kind;
-  $("#syncLabel").textContent = label;
+function pushMissing(remote){
+  for(const col of COLS){
+    const far = (remote && remote[col]) || {};
+    for(const [id, doc] of Object.entries(localData[col]||{})){
+      const other = far[id];
+      if(!other || (other.updatedAt||0) < (doc.updatedAt||0)) pushDoc(col, id);
+    }
+  }
 }
-async function save(col,id,body){
-  try{ await store.put(col,id,body); }
-  catch(e){ toast(e && e.code === "quota_exceeded" ? "La base est pleine, videz des articles." : "Enregistrement impossible, réessayez."); }
+function onStream(ev){
+  let msg;
+  try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+  if(!msg || msg.path === undefined) return;
+  esState = "live";
+  const parts = String(msg.path).split("/").filter(Boolean);
+  const data = msg.data;
+  const touched = new Set();
+  if(parts.length === 0){
+    const remote = data || {};
+    for(const col of COLS){
+      for(const [id, doc] of Object.entries(remote[col] || {})){
+        if(mergeDoc(col, id, doc)) touched.add(col);
+      }
+    }
+    if(!firstSync){ firstSync = true; pushMissing(remote); }
+  } else if(parts.length === 1){
+    if(!COLS.includes(parts[0])) return;
+    for(const [id, doc] of Object.entries(data || {})){
+      if(mergeDoc(parts[0], id, doc)) touched.add(parts[0]);
+    }
+  } else {
+    if(!COLS.includes(parts[0])) return;
+    if(mergeDoc(parts[0], parts[1], data)) touched.add(parts[0]);
+  }
+  if(touched.size){ persist(); for(const col of touched) emit(col); }
+  updateSync();
 }
-async function drop(col,id){
-  try{ await store.remove(col,id); }catch(e){ toast("Suppression impossible, réessayez."); }
+function connect(){
+  if(es){ try{ es.close(); }catch(e){} es = null; }
+  if(!cfg.url || !cfg.code){ esState = "off"; updateSync(); return; }
+  firstSync = false;
+  esState = "wait"; updateSync();
+  try{ es = new EventSource(roomUrl()); }
+  catch(e){ esState = "wait"; updateSync(); return; }
+  es.addEventListener("open", ()=>{ esState = "live"; updateSync(); });
+  es.addEventListener("error", ()=>{ esState = "wait"; updateSync(); });
+  es.addEventListener("put", onStream);
+  es.addEventListener("patch", onStream);
+  es.addEventListener("cancel", ()=>{
+    esState = "wait"; updateSync();
+    toast("Lecture refusée : vérifiez les règles de la base.");
+  });
+  flush();
+}
+function updateSync(){
+  const el = document.getElementById("sync");
+  const label = document.getElementById("syncLabel");
+  if(!el) return;
+  if(!cfg.url || !cfg.code){ el.dataset.state = "local"; label.textContent = "Ce téléphone"; return; }
+  if(queue.length){ el.dataset.state = "wait"; label.textContent = queue.length + " en attente"; return; }
+  if(esState === "live"){ el.dataset.state = "live"; label.textContent = "Foyer"; return; }
+  el.dataset.state = "wait"; label.textContent = "Reconnexion";
+}
+function saveCfg(next){
+  cfg = next;
+  try{ localStorage.setItem(LS_CFG, JSON.stringify(cfg)); }catch(e){}
+  connect();
+}
+function makeCode(){
+  const a = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const buf = new Uint32Array(16);
+  (window.crypto || window.msCrypto).getRandomValues(buf);
+  return [...buf].map(n=>a[n % a.length]).join("");
+}
+function inviteLink(){
+  const payload = btoa(JSON.stringify(cfg)).replace(/=+$/,"");
+  return location.origin + location.pathname + "#f=" + encodeURIComponent(payload);
 }
 
 /* --------------------------- liste de courses --------------------------- */
@@ -872,6 +1072,41 @@ async function saveRecipe(){
   toast("« " + name + " » enregistrée");
 }
 
+function openSyncSheet(){
+  const linked = !!(cfg.url && cfg.code);
+  const rules = '{\n  "rules": {\n    "f": {\n      "$foyer": {\n        ".read": "$foyer.length >= 12",\n        ".write": "$foyer.length >= 12"\n      }\n    }\n  }\n}';
+  openSheet(
+    '<div class="sheet-head"><h2>Synchronisation</h2>' + CLOSE_BTN + '</div>' +
+    '<div class="sheet-body">' +
+      (linked
+        ? '<p class="syncstate ok">Ce téléphone est relié à un foyer. Recettes, courses et menus arrivent sur l\'autre téléphone en quelques secondes.</p>' +
+          '<div class="field"><label for="invite">Lien d\'invitation</label>' +
+          '<input id="invite" readonly value="' + esc(inviteLink()) + '">' +
+          '<div class="hint">À envoyer par SMS : un seul tap sur l\'autre téléphone et les deux listes sont reliées. Qui a ce lien peut lire et modifier la liste — ne le publiez pas.</div></div>' +
+          '<button class="btn btn-primary wide" data-act="copy-invite" style="margin-bottom:18px">Copier le lien d\'invitation</button>'
+        : '<p class="syncstate">Pour l\'instant la liste ne vit que sur ce téléphone. Reliez-la à une base gratuite pour la partager avec l\'autre téléphone.</p>') +
+      '<details class="setup"' + (linked ? '' : ' open') + '><summary>Créer la base — 5 minutes, une seule fois</summary>' +
+      '<ol class="setup-steps">' +
+        '<li>Ouvrez <b>console.firebase.google.com</b> et créez un projet. C\'est gratuit et sans carte bancaire ; Google Analytics est inutile ici.</li>' +
+        '<li>Dans le menu, <b>Realtime Database</b> → <b>Créer une base de données</b>. Choisissez l\'Europe, puis <b>Démarrer en mode verrouillé</b>.</li>' +
+        '<li>Onglet <b>Règles</b> : remplacez tout par ceci, puis <b>Publier</b>.<pre>' + esc(rules) + '</pre></li>' +
+        '<li>Copiez l\'adresse affichée en haut de la base — elle finit par <b>firebasedatabase.app</b> — et collez-la ci-dessous.</li>' +
+        '<li>Tirez un code, enregistrez, puis envoyez le lien d\'invitation.</li>' +
+      '</ol></details>' +
+      '<div class="field"><label for="dbUrl">Adresse de la base</label>' +
+        '<input id="dbUrl" inputmode="url" placeholder="https://mon-projet-default-rtdb.europe-west1.firebasedatabase.app" value="' + esc(cfg.url||"") + '"></div>' +
+      '<div class="field"><label for="dbCode">Code du foyer</label>' +
+        '<div class="codewrap"><input id="dbCode" placeholder="12 caractères minimum" value="' + esc(cfg.code||"") + '">' +
+        '<button class="btn" data-act="gen-code">Tirer</button></div>' +
+        '<div class="hint">C\'est le secret partagé entre vos deux téléphones. Il doit être identique des deux côtés — le lien d\'invitation s\'en charge.</div></div>' +
+    '</div>' +
+    '<div class="sheet-foot">' +
+      (linked ? '<button class="btn btn-quiet" data-act="leave-foyer">Quitter le foyer</button>' : '') +
+      '<button class="btn btn-primary" data-act="save-sync">Enregistrer</button>' +
+    '</div>'
+  );
+}
+
 function openPicker(slotId){
   const recipes = [...state.recipes.values()].sort((a,b)=>(a.name||"").localeCompare(b.name||"","fr"));
   const [dpart, spart] = slotId.split("_");
@@ -928,6 +1163,32 @@ document.addEventListener("click", async (ev)=>{
   const act = btn.dataset.act, id = btn.dataset.id;
   if(act === "close"){ closeSheet(); return; }
 
+  if(act === "sync"){ openSyncSheet(); return; }
+  if(act === "gen-code"){ document.getElementById("dbCode").value = makeCode(); return; }
+  if(act === "save-sync"){
+    const url = document.getElementById("dbUrl").value.trim().replace(/\/+$/,"");
+    const code = document.getElementById("dbCode").value.trim().replace(/[^a-zA-Z0-9_-]/g,"");
+    if(url && !/^https:\/\/.+/.test(url) && !/^http:\/\/(localhost|127\.)/.test(url)){ toast("L'adresse doit commencer par https://"); return; }
+    if(url && code.length < 12){ toast("Le code du foyer fait au moins 12 caractères."); return; }
+    saveCfg({url, code});
+    closeSheet();
+    toast(url ? "Foyer enregistré, synchronisation en route" : "Synchronisation désactivée");
+    return;
+  }
+  if(act === "copy-invite"){
+    const field = document.getElementById("invite");
+    const link = field ? field.value : inviteLink();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(link).then(()=>toast("Lien copié"), ()=>{ if(field){field.select();} toast("Copiez le lien sélectionné"); });
+    } else if(field){ field.select(); document.execCommand("copy"); toast("Lien copié"); }
+    return;
+  }
+  if(act === "leave-foyer"){
+    saveCfg({url:"", code:""});
+    closeSheet();
+    toast("Ce téléphone n'est plus relié");
+    return;
+  }
   if(act === "new-recipe"){ openNewRecipe(); return; }
   if(act === "save-recipe"){ await saveRecipe(); return; }
   if(act === "rm-ing"){
@@ -1076,30 +1337,38 @@ document.addEventListener("input", ev=>{
 });
 
 /* ------------------------------ démarrage ------------------------------ */
-render();
-
-(async function boot(){
-  let db = null;
-  try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db = null; }
-  if(db){
-    store = liveStore(db);
-    setSync("live", "Partagé");
-  } else {
-    store = localStore();
-    setSync("local", "Ce téléphone");
+(function boot(){
+  loadLocal();
+  const m = location.hash.match(/[#&]f=([^&]+)/);
+  if(m){
     try{
-      if(!localStorage.getItem("panier:recipes")){
-        const seed = {};
-        for(const r of STARTERS) seed[r.id] = r;
-        localStorage.setItem("panier:recipes", JSON.stringify(seed));
+      const next = JSON.parse(atob(decodeURIComponent(m[1])));
+      if(next && next.url && next.code){
+        cfg = next;
+        localStorage.setItem(LS_CFG, JSON.stringify(cfg));
+        setTimeout(()=>toast("Foyer rejoint — les deux téléphones partagent la même liste."), 700);
       }
     }catch(e){}
+    history.replaceState(null, "", location.pathname + location.search);
   }
-  for(const col of COLS){
-    store.watch(col, map=>{ state[col] = map; state.ready = true; render(); });
+  const vide = COLS.every(c=>Object.keys(localData[c]||{}).length === 0);
+  if(vide && !cfg.url){
+    const now = Date.now();
+    for(const r of STARTERS) localData.recipes[r.id] = Object.assign({}, r, {createdAt:now, updatedAt:now});
+    persist();
   }
-  setTimeout(()=>{ state.ready = true; render(); }, 1500);
+  for(const col of COLS) state[col] = visible(col);
+  state.ready = true;
+  render();
+  updateSync();
+  connect();
+  if("serviceWorker" in navigator && location.protocol.indexOf("http") === 0){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  }
 })();
 
 })();
 </script>
+
+</body>
+</html>
