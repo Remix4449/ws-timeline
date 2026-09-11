@@ -1,32 +1,17 @@
-/* Coquille hors ligne : l'app s'ouvre sans réseau, les données vivent
-   dans localStorage et repartent vers le foyer au retour de la connexion. */
-const CACHE = "panier-v2";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+/* Panier Commun a déménagé vers https://remix4449.github.io/panier-commun/
+   Ce service worker ne remplace plus rien : il prend la place de l'ancien,
+   vide ses caches et se retire. Les téléphones qui gardaient la vieille
+   coquille hors ligne repassent ainsi par le réseau, et tombent sur la page
+   de redirection. */
+self.addEventListener("install", function(ev){ self.skipWaiting(); });
 
-self.addEventListener("install", ev => {
-  ev.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
-});
-
-self.addEventListener("activate", ev => {
+self.addEventListener("activate", function(ev){
   ev.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener("fetch", ev => {
-  const url = new URL(ev.request.url);
-  if (ev.request.method !== "GET" || url.origin !== location.origin) return;
-  ev.respondWith(
-    caches.match(ev.request).then(hit => {
-      const live = fetch(ev.request)
-        .then(res => {
-          if (res && res.ok) caches.open(CACHE).then(c => c.put(ev.request, res.clone()));
-          return res;
-        })
-        .catch(() => hit);
-      return hit || live;
-    })
+      .then(function(noms){ return Promise.all(noms.map(function(n){ return caches.delete(n); })); })
+      .then(function(){ return self.registration.unregister(); })
+      .then(function(){ return self.clients.matchAll({type:"window"}); })
+      .then(function(clients){ clients.forEach(function(c){ c.navigate(c.url); }); })
+      .catch(function(){})
   );
 });
