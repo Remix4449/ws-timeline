@@ -1,6 +1,6 @@
 /* Coquille hors ligne : l'app s'ouvre sans réseau, les données vivent
    dans localStorage et repartent vers le foyer au retour de la connexion. */
-const CACHE = "panier-v1";
+const CACHE = "panier-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", ev => {
