@@ -10,7 +10,10 @@ Chaque canevas est une page manipulable au doigt. Elles ne se combinent pas :
 elles défendent quatre idées différentes de ce qui cloche aujourd'hui, et on en
 choisit une.
 
-Ouvrir [`index.html`](index.html) pour la présentation et la comparaison.
+Ouvrir [`index.html`](index.html) pour la présentation et la comparaison. Les quatre
+canevas sont aussi publiés en atelier manipulable, sans rien installer :
+<https://claude.ai/artifact/1qn1n47DEWXqUu2ESouk8C> (page privée, accessible au
+propriétaire du dépôt).
 
 | | Canevas | Thèse en une phrase |
 | --- | --- | --- |

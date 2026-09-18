@@ -162,8 +162,11 @@ const FLUX = {
   arret(){ this.actif = false; this.univers = []; this.canaux = 0; }
 };
 
-/* Bandeau de navigation entre maquettes, posé en haut de chaque canevas. */
+/* Bandeau de navigation entre maquettes, posé en haut de chaque canevas.
+   Encadré — dans l'atelier, qui présente les quatre côte à côte — il ne sert
+   à rien : la page hôte porte déjà la navigation. */
 function bandeau(courant){
+  if(window.top !== window.self) return;
   const pages = [["a", "A · Pupitre", "a-pupitre.html"], ["b", "B · Relevé", "b-releve.html"],
                  ["c", "C · Plan 512", "c-plan.html"], ["d", "D · Feuille", "d-feuille.html"]];
   const d = el("div", "maq");
