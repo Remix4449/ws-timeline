@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Canevas H — Onglets</title>
+<link rel="stylesheet" href="socle.css">
+<link rel="stylesheet" href="mix.css">
+<style>
+/* ---------------------------------------------------------------------------
+   Canevas H — « Onglets »
+
+   Assemblage demandé : une seule liste à trois onglets — tout, les appareils,
+   les gradateurs — la mini-télécommande posée en haut, et deux boutons en bas
+   qui ouvrent chacun un volet : relever les gradateurs, ajouter des appareils.
+
+   Le volet est la différence avec les canevas précédents : il ne remplace pas
+   la liste, il la recouvre à moitié. On voit donc la ligne se remplir pendant
+   qu'on relève, et la liste se déplace toute seule sur l'élément en cours.
+--------------------------------------------------------------------------- */
+
+.app{display:flex;flex-direction:column;flex:1;min-height:0;max-width:820px;width:100%;margin:0 auto}
+
+/* -------------------------------- en-tête -------------------------------- */
+.haut{flex:none;padding:10px 14px 0}
+.haut .tl{margin-bottom:10px}
+.ongl{display:flex;background:var(--sur2);border-radius:12px;padding:3px;gap:3px;margin-bottom:10px}
+.ongl button{flex:1;border:0;background:none;border-radius:10px;padding:9px 6px;
+             font:700 13.5px/1.25 var(--body);color:var(--ink2)}
+.ongl button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.ongl button i{display:block;font-style:normal;font:500 10.5px/1.5 var(--mono);color:var(--ink3)}
+.ongl button[aria-pressed="true"] i{color:var(--dmx)}
+
+/* --------------------------------- liste --------------------------------- */
+.liste{flex:1;min-height:0;overflow-y:auto;padding:0 14px 14px;scroll-padding:80px}
+.liste .pile{margin-bottom:10px}
+.sec{display:flex;align-items:center;gap:10px;margin:14px 2px 8px;
+     font:700 10.5px/1 var(--body);letter-spacing:.15em;text-transform:uppercase;color:var(--ink3)}
+.sec i{flex:1;height:1px;background:var(--line);font-style:normal}
+.sec em{font:500 11px/1 var(--mono);font-style:normal;text-transform:none;letter-spacing:0}
+.rg.pointe{outline:2px solid var(--tel);outline-offset:-2px;border-radius:10px;
+           scroll-margin-top:6px}
+
+/* ------------------------------ barre du bas ----------------------------- */
+.bas{flex:none;display:flex;gap:9px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+     border-top:1.5px solid var(--line);background:var(--sur)}
+.bas button{flex:1;border:0;border-radius:14px;padding:14px 10px;font:700 14px/1.2 var(--body);
+            background:var(--tel);color:#fff;text-align:left}
+.bas button.dmx{background:var(--dmx)}
+.bas button b{display:block;font:600 10.5px/1.7 var(--mono);opacity:.9}
+.bas button[aria-expanded="true"]{box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+
+/* -------------------------------- volets --------------------------------- */
+/* Volet à mi-écran : la liste reste visible au-dessus et se met à jour pendant
+   qu'on écrit dedans. Un appui sur le fond, ou la poignée, le referme. */
+.fond{position:fixed;inset:0;z-index:40;background:rgba(8,9,12,.34);opacity:0;
+      transition:opacity .16s}
+.fond.on{opacity:1}
+.volet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--sur);
+       border-top:1.5px solid var(--line);border-radius:20px 20px 0 0;
+       box-shadow:0 -14px 40px rgba(8,9,12,.22);
+       max-height:min(64vh,560px);display:flex;flex-direction:column;
+       transform:translateY(102%);transition:transform .2s ease-out}
+.volet.on{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){ .volet,.fond{transition:none} }
+.volet .poignee{flex:none;padding:9px 14px 4px;display:flex;align-items:center;gap:10px}
+.volet .poignee .barre{width:38px;height:4px;border-radius:99px;background:var(--line);margin:0 auto}
+.volet .tete{flex:none;display:flex;align-items:baseline;gap:10px;padding:2px 14px 10px;
+             border-bottom:1px solid var(--line)}
+.volet .tete h2{font:800 17px/1.1 var(--disp);letter-spacing:-.02em;margin:0}
+.volet .tete .cpt{margin-left:auto;font:500 11.5px/1 var(--mono);color:var(--ink3)}
+.volet .tete .x{border:0;background:var(--sur2);border-radius:99px;width:30px;height:30px;
+                color:var(--ink2);font-size:15px;line-height:1}
+.volet .corps{flex:1;min-height:0;overflow-y:auto;padding:12px 14px
+              calc(12px + env(safe-area-inset-bottom,0px))}
+
+/* ---------------------- volet « relever les gradateurs » ----------------- */
+.rel .ecr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center;
+          background:var(--sur2);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.rel .ecr .n{grid-row:1/3;font:600 44px/1 var(--mono);color:var(--tel);
+             font-variant-numeric:tabular-nums;min-width:76px;text-align:center}
+.rel .ecr .ad{font:500 11.5px/1.3 var(--mono);color:var(--ink3);align-self:end}
+.rel .ecr input.cir{background:var(--bg);border:1.5px solid var(--line);border-radius:11px;
+     padding:11px 12px;font:600 22px/1 var(--mono);outline:none;width:100%;align-self:start}
+.rel .ecr input.cir:focus{border-color:var(--tel)}
+.rel .note{width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:11px;
+     padding:10px 12px;font:500 14px/1 var(--body);outline:none;margin-bottom:10px}
+.rel .jauge{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.rel .jauge input{-webkit-appearance:none;appearance:none;flex:1;height:34px;background:none;margin:0}
+.rel .jauge input::-webkit-slider-runnable-track{height:34px;border-radius:11px;background:var(--sur2)}
+.rel .jauge input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:34px;border-radius:10px;
+     background:var(--tel);border:0}
+.rel .jauge input::-moz-range-track{height:34px;border-radius:11px;background:var(--sur2)}
+.rel .jauge input::-moz-range-thumb{width:30px;height:34px;border-radius:10px;background:var(--tel);border:0}
+.rel .jauge b{font:600 17px/1 var(--mono);min-width:54px;text-align:right;font-variant-numeric:tabular-nums}
+.rel .gros{width:100%;border:0;border-radius:14px;padding:16px;font:700 16px/1 var(--body);
+           background:var(--tel);color:#fff;margin-bottom:9px}
+.rel .rang{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:9px}
+.rel .rang.deux{grid-template-columns:1fr 1fr}
+.rel .mini{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 6px;
+           font:600 12.5px/1 var(--body);color:var(--ink2)}
+.rel .mini.on{background:var(--tel);border-color:var(--tel);color:#fff}
+.rel .avanc{height:5px;border-radius:99px;background:var(--sur2);overflow:hidden;margin-bottom:10px}
+.rel .avanc i{display:block;height:100%;background:var(--tel);transition:width .2s}
+
+/* ------------------- volet « ajouter des appareils » --------------------- */
+.add .pf{margin-bottom:10px}
+.add .aide{font:500 12.5px/1.5 var(--body);color:var(--ink3);margin:0 2px 10px}
+.add .fini{width:100%;border:0;border-radius:14px;padding:15px;font:700 15px/1 var(--body);
+           background:var(--dmx);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="haut" id="haut"></div>
+  <div class="liste" id="liste"></div>
+  <div class="bas" id="bas"></div>
+</div>
+
+<script src="socle.js"></script>
+<script src="mix.js"></script>
+<script>
+bandeau("h");
+
+const E = etatDemo();
+let onglet = "tout";      // tout | app | grada
+let ouvert = null;        // null | "relever" | "ajouter"
+let pointe = null;        // gradateur en cours de relevé, pour le repérer dans la liste
+
+function maj(){ rendre(); }
+
+/* --------------------------------- rendu --------------------------------- */
+function rendre(){
+  const liste = adresser(E.lignes);
+
+  /* En-tête : la mini-télécommande, puis les trois onglets. */
+  const h = el("div");
+  h.append(barreTele(E, maj));
+  const o = el("div", "ongl");
+  [["tout", "Tout", `${liste.length + E.reg.nb} éléments`],
+   ["app", "Appareils", `${appsRestants(E)} sans circuit`],
+   ["grada", "Gradateurs", `${gradasRestants(E)} à relever`]].forEach(([k, t, s]) => {
+    const b = el("button", null, `${t}<i>${s}</i>`);
+    b.setAttribute("aria-pressed", onglet === k);
+    b.onclick = () => { onglet = k; rendre(); };
+    o.append(b);
+  });
+  h.append(o);
+  $("#haut").replaceChildren(h);
+
+  /* La liste : les mêmes rangées partout, seul le tri change. */
+  const d = el("div");
+  if(onglet === "tout" || onglet === "grada") d.append(pileGradas());
+  if(onglet === "tout" || onglet === "app") d.append(pileApps(liste));
+  $("#liste").replaceChildren(d);
+
+  /* Les deux boutons du bas, qui ouvrent les volets. */
+  const bg = el("button", null, `Relever les gradateurs<b>${gradasRestants(E)} restants</b>`);
+  bg.setAttribute("aria-expanded", ouvert === "relever");
+  bg.onclick = () => ouvrir("relever");
+  const ba = el("button", "dmx", `Ajouter des appareils<b>${E.lignes.length} lignes · ${liste.length} appareils</b>`);
+  ba.setAttribute("aria-expanded", ouvert === "ajouter");
+  ba.onclick = () => ouvrir("ajouter");
+  $("#bas").replaceChildren(bg, ba);
+
+  if(ouvert === "relever") majVoletRelever();
+  if(ouvert === "ajouter") majVoletAjouter();
+}
+
+function pileGradas(){
+  const rangs = listeGradas(E).map(n => {
+    const a = adrGrada(n, E.reg), c = circuitGrada(E, n), lv = E.niv[n] || 0;
+    const r = rangee({
+      badge:"G",
+      titre:`Gradateur ${n}`,
+      sous:c ? `circuit ${c}${gradaFiche(E, n).note ? " · " + gradaFiche(E, n).note : ""}`
+             : "circuit à relever",
+      dmxHaut:`${E.reg.proto} · U${a.u}`, dmx:String(a.canal),
+      action:lv > 0 ? lv + " %" : (c || "relever"),
+      actionEtat:lv > 0 ? "on" : c ? "" : "vide",
+      allume:lv > 0,
+      onAction:() => {
+        if(lv > 0){ E.niv[n] = 0; poserFlux(E); maj(); }
+        else if(c){ allumerSeuls(E, [n]); maj(); }
+        else ouvrir("relever", listeGradas(E).indexOf(n));
+      }
+    });
+    r.dataset.g = n;
+    if(n === pointe) r.classList.add("pointe");
+    return r;
+  });
+  return pile("Gradateurs", `${E.reg.nb} · U${E.reg.u} · ${E.reg.adr}→`, rangs);
+}
+
+function pileApps(liste){
+  const rangs = liste.map(x => {
+    const c = circuitApp(E, x.n);
+    return rangee({
+      badge:"P", appareil:true,
+      titre:`${courtNom(x.app)} · n° ${x.n}`,
+      sous:`${x.mode} · ${x.ch} canaux`,
+      dmxHaut:`U${x.u}`, dmx:String(x.adr),
+      action:c || "circ ?", actionEtat:c ? "" : "vide",
+      onAction:() => {
+        const v = prompt(`Circuit de l'appareil ${x.n} (${courtNom(x.app)}) ?`, c);
+        if(v != null){ E.affect[x.n] = v.trim(); maj(); }
+      }
+    });
+  });
+  return pile("Appareils", `${liste.length} · ${puissance(liste)}`, rangs,
+              "Aucune ligne : ouvrir « Ajouter des appareils ».");
+}
+
+/* -------------------------------- volets --------------------------------- */
+let fond = null, volet = null, indice = 0;
+
+function ouvrir(quoi, depart){
+  if(ouvert === quoi && depart == null){ fermer(); return; }
+  fermer(true);
+  ouvert = quoi;
+  if(quoi === "relever"){
+    indice = depart != null ? depart : (prochainVide() ?? 0);
+  }
+  fond = el("div", "fond");
+  fond.onclick = () => fermer();
+  volet = el("div", "volet " + (quoi === "relever" ? "rel" : "add"));
+  volet.setAttribute("role", "dialog");
+  volet.setAttribute("aria-label", quoi === "relever" ? "Relever les gradateurs" : "Ajouter des appareils");
+  volet.innerHTML = `<div class="poignee"><span class="barre"></span></div>
+    <div class="tete"><h2></h2><span class="cpt"></span>
+      <button class="x" aria-label="Fermer">✕</button></div>
+    <div class="corps"></div>`;
+  volet.querySelector(".x").onclick = () => fermer();
+  volet.querySelector(".poignee").onclick = () => fermer();
+  document.body.append(fond, volet);
+  requestAnimationFrame(() => { fond.classList.add("on"); volet.classList.add("on"); });
+  /* Ouvrir le relevé, c'est déjà appeler le gradateur : il s'allume, la liste
+     se déplace dessus et le volet s'ouvre sur lui. */
+  if(quoi === "relever") allerA(indice);
+  else rendre();
+}
+
+function fermer(sansRendu){
+  if(!volet) return;
+  const f = fond, v = volet;
+  f.classList.remove("on"); v.classList.remove("on");
+  setTimeout(() => { f.remove(); v.remove(); }, 200);
+  fond = volet = null; ouvert = null; pointe = null;
+  if(!sansRendu) rendre();
+}
+
+/* ---------------------- volet : relever les gradateurs ------------------- */
+const prochainVide = (depuis = 0) => {
+  const l = listeGradas(E);
+  for(let k = depuis; k < l.length; k++) if(!circuitGrada(E, l[k])) return k;
+  return null;
+};
+
+/* Amener la liste sur le gradateur appelé — le repère est posé avant le rendu,
+   sans quoi la rangée se dessinerait sans lui. */
+function defilerVers(n){
+  /* En haut de la liste, pas au centre : le volet couvre la moitié basse. */
+  defiler($(`.rg[data-g="${n}"]`), "start");
+}
+
+function allerA(k, niveau = 100){
+  const l = listeGradas(E);
+  if(k == null || k < 0 || k >= l.length) return;
+  indice = k;
+  pointe = l[k];
+  allumerSeuls(E, [l[k]], niveau);
+  rendre();
+  defilerVers(pointe);
+}
+
+function majVoletRelever(){
+  const l = listeGradas(E);
+  const n = l[indice];
+  const a = n ? adrGrada(n, E.reg) : null;
+  const f = n ? gradaFiche(E, n) : { circuit:"", note:"" };
+  const lv = n ? (E.niv[n] || 0) : 0;
+  const faits = l.length - gradasRestants(E);
+
+  volet.querySelector(".tete h2").textContent = "Relever les gradateurs";
+  volet.querySelector(".tete .cpt").textContent = `${faits} / ${l.length} relevés`;
+
+  const c = volet.querySelector(".corps");
+  const garde = document.activeElement && document.activeElement.classList.contains("cir");
+  const pos = garde ? document.activeElement.selectionStart : null;
+
+  const d = el("div");
+  d.innerHTML = `<div class="avanc"><i style="width:${Math.round(faits / Math.max(1, l.length) * 100)}%"></i></div>
+    <div class="ecr">
+      <span class="n">${n || "—"}</span>
+      <span class="ad">${a ? `${esc(E.reg.proto)} · U${a.u} · canal ${a.canal}` : "aucun gradateur"}</span>
+      <input class="cir" inputmode="numeric" placeholder="n° de circuit"
+             value="${esc(f.circuit)}" aria-label="Circuit du gradateur ${n || ""}">
+    </div>
+    <input class="note" placeholder="repère — face jardin, contre 2…" value="${esc(f.note)}"
+           aria-label="Repère">
+    <div class="jauge"><input type="range" min="0" max="100" value="${lv}" aria-label="Niveau"><b>${lv} %</b></div>`;
+
+  const cir = d.querySelector(".cir");
+  cir.oninput = () => { f.circuit = cir.value; majListeSeule(); majCompteurs(); };
+  cir.onkeydown = e => { if(e.key === "Enter") suivant(); };
+  d.querySelector(".note").oninput = e => { f.note = e.target.value; majListeSeule(); };
+  const j = d.querySelector(".jauge input");
+  j.oninput = e => {
+    if(!n) return;
+    E.niv[n] = +e.target.value; poserFlux(E);
+    d.querySelector(".jauge b").textContent = E.niv[n] + " %";
+    majListeSeule(); majBarre();
+  };
+
+  const ok = el("button", "gros", "Noté — gradateur suivant ▶");
+  ok.onclick = suivant;
+  d.append(ok);
+
+  const r1 = el("div", "rang");
+  const prec = el("button", "mini", "◀ précédent");
+  const saut = el("button", "mini", "Sauter");
+  const noir = el("button", "mini" + (lv === 0 ? " on" : ""), "Noir");
+  prec.onclick = () => allerA(indice - 1);
+  saut.onclick = () => allerA(prochainVide(indice + 1) ?? Math.min(l.length - 1, indice + 1));
+  noir.onclick = () => { if(n){ E.niv[n] = 0; poserFlux(E); rendre(); } };
+  r1.append(prec, saut, noir);
+  d.append(r1);
+
+  const r2 = el("div", "rang deux");
+  const plus = el("button", "mini", "+ un gradateur");
+  const fin = el("button", "mini", "Terminer");
+  plus.onclick = () => { E.reg.nb++; allerA(E.reg.nb - 1); };
+  fin.onclick = () => { toutEteindre(E); fermer(); };
+  r2.append(plus, fin);
+  d.append(r2);
+
+  c.replaceChildren(d);
+  if(garde){ cir.focus(); try { cir.setSelectionRange(pos, pos); } catch(e){} }
+}
+
+function suivant(){
+  const k = prochainVide(indice + 1);
+  if(k != null){ allerA(k); return; }
+  if(indice + 1 < listeGradas(E).length){ allerA(indice + 1); return; }
+  toutEteindre(E); fermer();
+}
+
+/* ---------------------- volet : ajouter des appareils -------------------- */
+function majVoletAjouter(){
+  const liste = adresser(E.lignes);
+  volet.querySelector(".tete h2").textContent = "Ajouter des appareils";
+  volet.querySelector(".tete .cpt").textContent = `${liste.length} appareils`;
+  const c = volet.querySelector(".corps");
+  const d = el("div");
+  d.append(editeurLignes(E, maj));
+  d.append(el("p", "aide",
+    "Une ligne par type d'appareil : les adresses s'enchaînent toutes seules, " +
+    "et l'étendue se bascule d'un appui — « à la suite » ou départ imposé."));
+  const fin = el("button", "fini", "Terminer");
+  fin.onclick = () => fermer();
+  d.append(fin);
+  c.replaceChildren(d);
+}
+
+/* ------------------------- rafraîchissements ciblés ---------------------- */
+/* On ne reconstruit jamais le volet pendant la frappe : seules la liste et la
+   barre du haut se remettent à jour derrière. */
+function majListeSeule(){
+  const liste = adresser(E.lignes);
+  const d = el("div");
+  if(onglet === "tout" || onglet === "grada") d.append(pileGradas());
+  if(onglet === "tout" || onglet === "app") d.append(pileApps(liste));
+  $("#liste").replaceChildren(d);
+}
+function majBarre(){ $("#haut").replaceChildren(...(() => {
+  const h = el("div");
+  h.append(barreTele(E, maj));
+  const o = $("#haut .ongl");
+  if(o) h.append(o);
+  return [h];
+})()); }
+function majCompteurs(){
+  const b = $("#bas button");
+  if(b) b.innerHTML = `Relever les gradateurs<b>${gradasRestants(E)} restants</b>`;
+  const i = $("#haut .ongl button:last-child i");
+  if(i) i.textContent = `${gradasRestants(E)} à relever`;
+  if(volet && ouvert === "relever"){
+    const l = listeGradas(E), faits = l.length - gradasRestants(E);
+    volet.querySelector(".tete .cpt").textContent = `${faits} / ${l.length} relevés`;
+    const a = volet.querySelector(".avanc i");
+    if(a) a.style.width = Math.round(faits / Math.max(1, l.length) * 100) + "%";
+  }
+}
+
+rendre();
+if(location.hash === "#tel") ouvrir("relever");
+</script>
+</body>
+</html>

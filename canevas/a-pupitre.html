@@ -212,8 +212,7 @@ function choisir(n){
   S.sel = n; S.saisie = "";
   if(!S.niv[n]) S.niv[n] = 100;
   vibrer(12); envoyer(); rendre();
-  const l = $(`.gl[data-n="${n}"]`);
-  if(l) l.scrollIntoView({ block:"center", behavior:"smooth" });
+  defiler($(`.gl[data-n="${n}"]`), "center");
 }
 function niveau(pct){
   if(!S.sel) return;

@@ -162,6 +162,15 @@ const FLUX = {
   arret(){ this.actif = false; this.univers = []; this.canaux = 0; }
 };
 
+/* Amener un élément dans la vue. Le défilement doux est coupé quand le
+   système demande des animations réduites — et il ne se déclenche pas du tout
+   dans un rendu hors écran, d'où le repli sur un saut direct. */
+function defiler(n, block = "center"){
+  if(!n) return;
+  const doux = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  n.scrollIntoView({ block, behavior:doux ? "smooth" : "auto" });
+}
+
 /* Bandeau de navigation entre maquettes, posé en haut de chaque canevas.
    Encadré — dans l'atelier, qui présente les quatre côte à côte — il ne sert
    à rien : la page hôte porte déjà la navigation. */

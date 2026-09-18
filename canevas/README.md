@@ -33,6 +33,14 @@ ne changent que l'assemblage. Atelier :
 | F | [Deux temps](f-deux-temps.html) | Ce n'est pas l'outil qui change, c'est la posture : préparer assis, relever debout. |
 | G | [Circuits](g-circuits.html) | Le circuit organise l'écran : une carte par circuit, testable d'une touche. |
 
+Un dernier canevas reprend la mini-télécommande et range tout dans une seule
+liste à trois onglets, les deux actions passant par des volets. Atelier :
+<https://claude.ai/artifact/Rf6LuQse1p5JUjG27KyQpT>
+
+| | Canevas | Thèse en une phrase |
+| --- | --- | --- |
+| H | [Onglets](h-onglets.html) | Une liste à trois onglets ; le volet recouvre la liste à moitié au lieu de la remplacer. |
+
 ## Ce qu'on reproche à l'existant
 
 Relevé sur la version actuelle de l'application (`patch-app/app/src/main/assets/www/index.html`,
@@ -116,3 +124,4 @@ feuilles déjà enregistrés sur les téléphones.
 | `a-pupitre.html` · `b-releve.html` · `c-plan.html` · `d-feuille.html` | les quatre premiers canevas |
 | `mix.css` · `mix.js` | les pièces retenues du D et du B, rendues réutilisables |
 | `e-registre.html` · `f-deux-temps.html` · `g-circuits.html` | les trois mélanges |
+| `h-onglets.html` | le canevas à onglets et volets |
