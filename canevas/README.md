@@ -22,6 +22,17 @@ propriétaire du dépôt).
 | C | [Plan 512](c-plan.html) | Un univers, ce sont 512 cases — il faut les voir, et pouvoir les déplacer au doigt. |
 | D | [Feuille unique](d-feuille.html) | Le défaut est dans le modèle : le circuit est saisi deux fois et ne relie rien. |
 
+Trois canevas de plus reprennent les deux pièces retenues — le tableau d'ajout
+d'appareils et les rangées de liste du **D**, le relevé plein écran du **B** — et
+ne changent que l'assemblage. Atelier :
+<https://claude.ai/artifact/KN73n5Lw54juKaNFh1rE2G>
+
+| | Canevas | Thèse en une phrase |
+| --- | --- | --- |
+| E | [Registre](e-registre.html) | Un registre par objet : appareils d'un côté, gradateurs de l'autre. |
+| F | [Deux temps](f-deux-temps.html) | Ce n'est pas l'outil qui change, c'est la posture : préparer assis, relever debout. |
+| G | [Circuits](g-circuits.html) | Le circuit organise l'écran : une carte par circuit, testable d'une touche. |
+
 ## Ce qu'on reproche à l'existant
 
 Relevé sur la version actuelle de l'application (`patch-app/app/src/main/assets/www/index.html`,
@@ -102,4 +113,6 @@ feuilles déjà enregistrés sur les téléphones.
 | `index.html` | présentation, critique, comparaison des quatre |
 | `socle.css` | jetons de couleur et typographie, communs aux quatre |
 | `socle.js` | données de démonstration, calculs DMX, flux simulé |
-| `a-pupitre.html` · `b-releve.html` · `c-plan.html` · `d-feuille.html` | les canevas |
+| `a-pupitre.html` · `b-releve.html` · `c-plan.html` · `d-feuille.html` | les quatre premiers canevas |
+| `mix.css` · `mix.js` | les pièces retenues du D et du B, rendues réutilisables |
+| `e-registre.html` · `f-deux-temps.html` · `g-circuits.html` | les trois mélanges |

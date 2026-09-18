@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Patch & télécommande — quatre canevas</title>
+<title>Patch & télécommande — sept canevas</title>
 <link rel="stylesheet" href="socle.css">
 <style>
 .page{max-width:820px;margin:0 auto;padding:22px 18px 60px}
@@ -44,10 +44,10 @@ td:first-child{color:var(--ink2);width:34%}
 <body>
 <div class="page">
 <h1>Patch & télécommande</h1>
-<p class="chapo">Quatre refontes des deux outils, poussées jusqu'à la maquette manipulable.
-Chacune défend une idée différente de ce qui cloche aujourd'hui — elles ne se combinent pas,
-elles se choisissent. Les données, les calculs d'adresses et les correspondances Art-Net / sACN
-sont réels ; l'émission est simulée.</p>
+<p class="chapo">Sept refontes des deux outils, poussées jusqu'à la maquette manipulable :
+quatre propositions d'abord, chacune défendant une idée différente de ce qui cloche ; puis trois
+mélanges, qui reprennent les deux pièces retenues et ne changent que l'assemblage. Les données,
+les calculs d'adresses et les correspondances Art-Net / sACN sont réels ; l'émission est simulée.</p>
 
 <h2>Ce qui gêne aujourd'hui</h2>
 <div class="gr">
@@ -77,7 +77,7 @@ sont réels ; l'émission est simulée.</p>
     structure à revoir.</span></div></div>
 </div>
 
-<h2>Les quatre canevas</h2>
+<h2>Les quatre premiers canevas</h2>
 
 <a class="cv" href="a-pupitre.html" style="--c:var(--tel)">
   <div class="h"><span class="l">Canevas A</span><h3>Pupitre</h3></div>
@@ -137,6 +137,51 @@ sont réels ; l'émission est simulée.</p>
   </ul>
   <p class="pc"><span><b>Pour qui</b> · la préparation, la reprise, la transmission</span>
     <span><b>Coût</b> · impose une migration des données déjà saisies</span></p>
+</a>
+
+<h2>Trois mélanges — E, F, G</h2>
+<p class="chapo" style="margin-bottom:14px">Le tableau d'ajout d'appareils et les rangées de liste
+du canevas D, plus le relevé plein écran du canevas B : les mêmes pièces, assemblées trois fois.
+Le code commun tient dans <code>mix.js</code> et <code>mix.css</code> ; chaque canevas n'ajoute
+que son assemblage.</p>
+
+<a class="cv" href="e-registre.html" style="--c:var(--tel)">
+  <div class="h"><span class="l">Canevas E</span><h3>Registre</h3></div>
+  <p class="th">Thèse : <b>un registre par objet.</b> Les appareils d'un côté, les gradateurs de
+  l'autre, le même visuel de liste pour les deux.</p>
+  <ul>
+    <li>Le tableau d'ajout ouvre le registre des appareils, les réglages de plage celui des gradateurs.</li>
+    <li>Le bouton du bas emmène au relevé plein écran et ramène la liste remplie.</li>
+    <li>Toucher la pastille « circ ? » d'une rangée entre dans le relevé à cet élément.</li>
+  </ul>
+  <p class="pc"><span><b>Pour qui</b> · quand on cherche une chose précise</span>
+    <span><b>Coût</b> · le lien appareil ↔ gradateur n'apparaît nulle part</span></p>
+</a>
+
+<a class="cv" href="f-deux-temps.html" style="--c:var(--dmx)">
+  <div class="h"><span class="l">Canevas F</span><h3>Deux temps</h3></div>
+  <p class="th">Thèse : <b>ce n'est pas l'outil qui change, c'est la posture.</b> Assis on prépare,
+  debout on relève.</p>
+  <ul>
+    <li>La préparation montre tout à plat : plan de feu, plage de gradateurs, les deux listes.</li>
+    <li>Un seul bouton bascule sur le plateau, avec une file unique : gradateurs puis appareils.</li>
+    <li>Une seule barre d'avancement pour les deux — on ne revient qu'une fois le travail fait.</li>
+  </ul>
+  <p class="pc"><span><b>Pour qui</b> · une séance de relevé d'un bloc</span>
+    <span><b>Coût</b> · pas de télécommande sous la main pendant la préparation</span></p>
+</a>
+
+<a class="cv" href="g-circuits.html" style="--c:var(--ok)">
+  <div class="h"><span class="l">Canevas G</span><h3>Circuits</h3></div>
+  <p class="th">Thèse : <b>le circuit organise l'écran.</b> Chaque carte porte ses gradateurs et
+  ses appareils, et se teste d'une touche.</p>
+  <ul>
+    <li>Le plan de feu vit dans un volet : il pose les appareils et leurs adresses, sans circuit.</li>
+    <li>Les relevés plein écran remplissent les cartes, qui se forment derrière.</li>
+    <li>« Tester ▶ » allume tous les gradateurs d'un circuit — le doublage se vérifie d'une touche.</li>
+  </ul>
+  <p class="pc"><span><b>Pour qui</b> · la vérification et la transmission</span>
+    <span><b>Coût</b> · tant que rien n'est relevé, la feuille est presque vide</span></p>
 </a>
 
 <h2>Comparaison</h2>
