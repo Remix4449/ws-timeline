@@ -61,24 +61,29 @@ function toutEteindre(E){ E.niv = {}; E.sel = 0; FLUX.arret(); }
 /* -------------------------- rangée de liste (D) -------------------------- */
 /* Un appareil et un gradateur se lisent pareil : badge, désignation, adresse
    DMX à droite, une action. C'est ce qui rend les deux listes comparables. */
-function rangee({ badge, appareil, titre, sous, dmx, dmxHaut, action, actionEtat, onAction, allume }){
-  const d = el("div", "rg" + (allume ? " on" : ""));
+function rangee({ badge, appareil, titre, sous, dmx, dmxHaut, action, actionEtat, onAction,
+                  onRangee, allume }){
+  const d = el("div", "rg" + (allume ? " on" : "") + (onRangee ? " cliquable" : ""));
   d.innerHTML = `<span class="bd${appareil ? " ap" : ""}">${esc(badge)}</span>
     <span class="tx"><b>${esc(titre)}</b><span>${esc(sous || "—")}</span></span>
     <span class="dm">${esc(dmxHaut || "")}<b>${esc(dmx || "")}</b></span>`;
   if(action){
     const b = el("button", "ac" + (actionEtat === "on" ? " on" : actionEtat === "vide" ? " vide" : ""),
                  esc(action));
-    b.onclick = onAction;
+    b.onclick = e => { e.stopPropagation(); onAction(); };
     d.append(b);
   }
+  /* Le corps de la rangée peut porter sa propre action — allumer, par exemple —
+     sans voler celle de la pastille. */
+  if(onRangee) d.onclick = onRangee;
   return d;
 }
 
-function pile(titre, compte, elements, rien){
+function pile(titre, compte, elements, rien, bouton){
   const d = el("div", "pile");
   d.insertAdjacentHTML("beforeend",
     `<h3>${esc(titre)}<span>${esc(compte || "")}</span></h3>`);
+  if(bouton) d.querySelector("h3").append(bouton);
   if(!elements.length) d.insertAdjacentHTML("beforeend", `<p class="rien">${esc(rien || "Rien ici.")}</p>`);
   elements.forEach(e => d.append(e));
   return d;

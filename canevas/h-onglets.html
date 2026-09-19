@@ -56,6 +56,30 @@
 .bas button span.cpt{font:600 10.5px/1 var(--mono);background:rgba(255,255,255,.22);
                      border-radius:99px;padding:3px 6px}
 .bas button[aria-expanded="true"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45)}
+.bas button.pdf{flex:none;background:var(--sur2);color:var(--ink2);padding:9px 12px;gap:5px}
+
+/* ------------------------------ impression ------------------------------- */
+/* À l'écran la feuille d'impression n'existe pas ; à l'impression, elle est
+   seule. Sur Android, le bouton ouvre la boîte d'impression du système, qui
+   sait enregistrer en PDF. */
+#impression{display:none}
+@media print{
+  .maq,.app,.fond,.volet{display:none!important}
+  #impression{display:block;color:#000;background:#fff;font:11pt/1.4 var(--body)}
+  @page{size:A4;margin:14mm}
+  #impression h1{font:800 20pt/1.1 var(--disp);margin:0 0 2mm}
+  #impression .meta{font:9pt/1.5 var(--mono);color:#444;margin-bottom:5mm}
+  #impression h2{font:700 9pt/1 var(--body);letter-spacing:.12em;text-transform:uppercase;
+                 color:#444;margin:7mm 0 2mm;border-bottom:.4mm solid #000;padding-bottom:1.5mm}
+  #impression table{width:100%;border-collapse:collapse;font-size:9.5pt;
+                    font-variant-numeric:tabular-nums}
+  #impression th{text-align:left;font:700 7.5pt/1 var(--body);letter-spacing:.1em;
+                 text-transform:uppercase;color:#444;padding:2mm 1.5mm;border-bottom:.3mm solid #999}
+  #impression td{padding:1.6mm 1.5mm;border-bottom:.2mm solid #ddd}
+  #impression td.num{font-family:var(--mono)}
+  #impression tr{break-inside:avoid}
+  #impression .pied{margin-top:6mm;font-size:8.5pt;color:#555}
+}
 
 /* -------------------------------- volets --------------------------------- */
 /* Volet à mi-écran : la liste reste visible au-dessus et se met à jour pendant
@@ -110,6 +134,40 @@
 .rel .avanc{height:5px;border-radius:99px;background:var(--sur2);overflow:hidden;margin-bottom:10px}
 .rel .avanc i{display:block;height:100%;background:var(--tel);transition:width .2s}
 
+/* ------------------------ pavé numérique du relevé ----------------------- */
+/* Appeler un gradateur par son numéro : avec deux cents gradateurs, on ne
+   défile pas jusqu'au 147, on le tape. */
+.rel .ecr .n{cursor:pointer;border-radius:11px}
+.rel .ecr .n:hover{background:var(--bg)}
+.rel .ecr .n small{display:block;font:600 9px/1.6 var(--body);letter-spacing:.1em;
+                   text-transform:uppercase;color:var(--ink3)}
+.pave .saisie{background:var(--sur2);border-radius:14px;padding:14px;margin-bottom:10px;
+              font:600 40px/1 var(--mono);text-align:center;color:var(--tel);
+              font-variant-numeric:tabular-nums}
+.pave .saisie.vide{color:var(--ink3);font-size:20px}
+.pave .touches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px}
+.pave .touches button{border:0;border-radius:13px;padding:15px 0;background:var(--sur2);
+                      font:600 21px/1 var(--mono);color:var(--ink)}
+.pave .touches button.acc{background:var(--tel);color:#fff}
+.pave .touches button.sec{background:var(--bg);border:1.5px solid var(--line);
+                          font:600 14px/1 var(--body);color:var(--ink2)}
+
+/* ------------------------- volet « fiche » ------------------------------- */
+.fic .f{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}
+.fic label{font:700 10px/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.fic input{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;
+           padding:12px 14px;font:600 20px/1 var(--mono);outline:none;width:100%}
+.fic input.txt{font:500 15px/1.2 var(--body)}
+.fic input:focus{border-color:var(--tel)}
+.fic .info{display:flex;justify-content:space-between;gap:12px;padding:8px 0;
+           border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2)}
+.fic .info b{font:500 13px/1 var(--mono);color:var(--ink)}
+.fic .rang{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.fic .act{border:0;border-radius:13px;padding:14px;font:700 14px/1 var(--body);
+          background:var(--tel);color:#fff}
+.fic .act.sec{background:var(--bg);border:1.5px solid var(--line);color:var(--ink2)}
+.fic .act.sup{background:var(--bg);border:1.5px solid var(--ko);color:var(--ko)}
+
 /* ------------------- volet « ajouter des appareils » --------------------- */
 .add .pf{margin-bottom:10px}
 .add .aide{font:500 12.5px/1.5 var(--body);color:var(--ink3);margin:0 2px 10px}
@@ -123,6 +181,7 @@
   <div class="liste" id="liste"></div>
   <div class="bas" id="bas"></div>
 </div>
+<div id="impression"></div>
 
 <script src="socle.js"></script>
 <script src="mix.js"></script>
@@ -130,10 +189,22 @@
 bandeau("h");
 
 const E = etatDemo();
-let onglet = "tout";      // tout | app | grada
-let ouvert = null;        // null | "relever" | "ajouter"
-let pointe = null;        // gradateur en cours de relevé, pour le repérer dans la liste
-let repliee = false;      // télécommande réduite à une ligne
+E.reg.nb = 215;              // la taille d'une vraie salle : c'est ce qui fait la liste
+const exclus = new Set();    // gradateurs retirés de la feuille
+
+let onglet = "tout";         // tout | app | grada
+let ouvert = null;           // null | relever | ajouter | fiche
+let cible = null;            // élément ouvert dans la fiche : { t:"g"|"a", n }
+let pointe = null;           // gradateur en cours de relevé, repéré dans la liste
+let repliee = false;         // télécommande réduite à une ligne
+let masqueVides = true;      // n'afficher que les gradateurs qui portent un circuit
+let pave = null;             // frappe du pavé numérique ; null = pavé fermé
+
+/* Les gradateurs de la feuille : la plage, moins ceux qu'on a supprimés. */
+const gradas = () => listeGradas(E).filter(n => !exclus.has(n));
+const restantsG = () => gradas().filter(n => !circuitGrada(E, n)).length;
+const relevesG = () => gradas().filter(n => circuitGrada(E, n)).length;
+const restantsA = () => adresser(E.lignes).filter(x => !circuitApp(E, x.n)).length;
 
 function maj(){ rendre(); }
 
@@ -150,13 +221,12 @@ function telecommande(){
 function rendre(){
   const liste = adresser(E.lignes);
 
-  /* En-tête : la mini-télécommande, puis les trois onglets. */
   const h = el("div");
   h.append(telecommande());
   const o = el("div", "ongl");
-  [["tout", "Tout", liste.length + E.reg.nb],
-   ["app", "Appareils", appsRestants(E)],
-   ["grada", "Gradateurs", gradasRestants(E)]].forEach(([k, t, n]) => {
+  [["tout", "Tout", gradas().length + liste.length],
+   ["app", "Appareils", restantsA()],
+   ["grada", "Gradateurs", restantsG()]].forEach(([k, t, n]) => {
     const b = el("button", null, `${t}<em>${n}</em>`);
     b.setAttribute("aria-pressed", onglet === k);
     b.onclick = () => { onglet = k; rendre(); };
@@ -165,27 +235,38 @@ function rendre(){
   h.append(o);
   $("#haut").replaceChildren(h);
 
-  /* La liste : les mêmes rangées partout, seul le tri change. */
   const d = el("div");
   if(onglet === "tout" || onglet === "grada") d.append(pileGradas());
   if(onglet === "tout" || onglet === "app") d.append(pileApps(liste));
   $("#liste").replaceChildren(d);
 
-  /* Les deux boutons du bas, qui ouvrent les volets. */
-  const bg = el("button", null, `<span class="et">Relever gradateurs</span><span class="cpt">${gradasRestants(E)}</span>`);
+  const bg = el("button", null,
+    `<span class="et">Relever gradateurs</span><span class="cpt">${restantsG()}</span>`);
   bg.setAttribute("aria-expanded", ouvert === "relever");
   bg.onclick = () => ouvrir("relever");
-  const ba = el("button", "dmx", `<span class="et">Ajouter appareils</span><span class="cpt">${liste.length}</span>`);
+  const ba = el("button", "dmx",
+    `<span class="et">Ajouter appareils</span><span class="cpt">${liste.length}</span>`);
   ba.setAttribute("aria-expanded", ouvert === "ajouter");
   ba.onclick = () => ouvrir("ajouter");
-  $("#bas").replaceChildren(bg, ba);
+  const bp = el("button", "pdf", "⎙ PDF");
+  bp.setAttribute("aria-label", "Imprimer la feuille ou l'enregistrer en PDF");
+  bp.onclick = imprimer;
+  $("#bas").replaceChildren(bg, ba, bp);
 
   if(ouvert === "relever") majVoletRelever();
   if(ouvert === "ajouter") majVoletAjouter();
+  if(ouvert === "fiche") majVoletFiche();
 }
 
+/* Deux cents gradateurs dans une liste, personne ne les lit : on n'affiche
+   que ceux qui portent un circuit. Les autres vivent dans le relevé, et le
+   bouton de l'en-tête les rend visibles quand on veut vérifier. */
 function pileGradas(){
-  const rangs = listeGradas(E).map(n => {
+  const tous = gradas();
+  const vus = masqueVides ? tous.filter(n => circuitGrada(E, n)) : tous;
+  const caches = tous.length - vus.length;
+
+  const rangs = vus.map(n => {
     const a = adrGrada(n, E.reg), c = circuitGrada(E, n), lv = E.niv[n] || 0;
     const r = rangee({
       badge:"G",
@@ -196,17 +277,23 @@ function pileGradas(){
       action:lv > 0 ? lv + " %" : (c || "relever"),
       actionEtat:lv > 0 ? "on" : c ? "" : "vide",
       allume:lv > 0,
-      onAction:() => {
-        if(lv > 0){ E.niv[n] = 0; poserFlux(E); maj(); }
-        else if(c){ allumerSeuls(E, [n]); maj(); }
-        else ouvrir("relever", listeGradas(E).indexOf(n));
+      /* La pastille édite, le corps de la rangée allume. */
+      onAction:() => c ? ouvrir("fiche", { t:"g", n }) : ouvrir("relever", tous.indexOf(n)),
+      onRangee:() => {
+        if(lv > 0){ E.niv[n] = 0; poserFlux(E); } else allumerSeuls(E, [n]);
+        maj();
       }
     });
     r.dataset.g = n;
     if(n === pointe) r.classList.add("pointe");
     return r;
   });
-  return pile("Gradateurs", `${E.reg.nb} · U${E.reg.u} · ${E.reg.adr}→`, rangs);
+
+  const b = el("button", null, masqueVides ? `tout voir · ${caches}` : "masquer les vides");
+  b.onclick = () => { masqueVides = !masqueVides; rendre(); };
+  return pile("Gradateurs",
+    `${relevesG()} relevés / ${tous.length}`, rangs,
+    "Aucun gradateur relevé : ouvrir « Relever gradateurs ».", b);
 }
 
 function pileApps(liste){
@@ -218,31 +305,28 @@ function pileApps(liste){
       sous:`${x.mode} · ${x.ch} canaux`,
       dmxHaut:`U${x.u}`, dmx:String(x.adr),
       action:c || "circ ?", actionEtat:c ? "" : "vide",
-      onAction:() => {
-        const v = prompt(`Circuit de l'appareil ${x.n} (${courtNom(x.app)}) ?`, c);
-        if(v != null){ E.affect[x.n] = v.trim(); maj(); }
-      }
+      onAction:() => ouvrir("fiche", { t:"a", n:x.n })
     });
   });
   return pile("Appareils", `${liste.length} · ${puissance(liste)}`, rangs,
-              "Aucune ligne : ouvrir « Ajouter des appareils ».");
+              "Aucune ligne : ouvrir « Ajouter appareils ».");
 }
 
 /* -------------------------------- volets --------------------------------- */
 let fond = null, volet = null, indice = 0;
 
-function ouvrir(quoi, depart){
-  if(ouvert === quoi && depart == null){ fermer(); return; }
+function ouvrir(quoi, arg){
+  if(ouvert === quoi && arg == null){ fermer(); return; }
   fermer(true);
   ouvert = quoi;
-  if(quoi === "relever"){
-    indice = depart != null ? depart : (prochainVide() ?? 0);
-  }
+  pave = null;
+  if(quoi === "relever") indice = arg != null ? arg : (prochainVide() ?? 0);
+  if(quoi === "fiche") cible = arg;
   fond = el("div", "fond");
   fond.onclick = () => fermer();
-  volet = el("div", "volet " + (quoi === "relever" ? "rel" : "add"));
+  const classe = { relever:"rel", ajouter:"add", fiche:"fic" }[quoi];
+  volet = el("div", "volet " + classe);
   volet.setAttribute("role", "dialog");
-  volet.setAttribute("aria-label", quoi === "relever" ? "Relever les gradateurs" : "Ajouter des appareils");
   volet.innerHTML = `<div class="poignee"><span class="barre"></span></div>
     <div class="tete"><h2></h2><span class="cpt"></span>
       <button class="x" aria-label="Fermer">✕</button></div>
@@ -262,13 +346,13 @@ function fermer(sansRendu){
   const f = fond, v = volet;
   f.classList.remove("on"); v.classList.remove("on");
   setTimeout(() => { f.remove(); v.remove(); }, 200);
-  fond = volet = null; ouvert = null; pointe = null;
+  fond = volet = null; ouvert = null; pointe = null; cible = null; pave = null;
   if(!sansRendu) rendre();
 }
 
 /* ---------------------- volet : relever les gradateurs ------------------- */
 const prochainVide = (depuis = 0) => {
-  const l = listeGradas(E);
+  const l = gradas();
   for(let k = depuis; k < l.length; k++) if(!circuitGrada(E, l[k])) return k;
   return null;
 };
@@ -281,7 +365,7 @@ function defilerVers(n){
 }
 
 function allerA(k, niveau = 100){
-  const l = listeGradas(E);
+  const l = gradas();
   if(k == null || k < 0 || k >= l.length) return;
   indice = k;
   pointe = l[k];
@@ -291,25 +375,30 @@ function allerA(k, niveau = 100){
 }
 
 function majVoletRelever(){
-  const l = listeGradas(E);
+  const l = gradas();
   const n = l[indice];
   const a = n ? adrGrada(n, E.reg) : null;
   const f = n ? gradaFiche(E, n) : { circuit:"", note:"" };
   const lv = n ? (E.niv[n] || 0) : 0;
-  const faits = l.length - gradasRestants(E);
+  const faits = relevesG();
 
   volet.querySelector(".tete h2").textContent = "Relever les gradateurs";
   volet.querySelector(".tete .cpt").textContent = `${faits} / ${l.length} relevés`;
-
   const c = volet.querySelector(".corps");
+
+  if(pave !== null){ c.replaceChildren(paveNumerique()); return; }
+
   const garde = document.activeElement && document.activeElement.classList.contains("cir");
   const pos = garde ? document.activeElement.selectionStart : null;
 
   const d = el("div");
-  d.innerHTML = `<div class="avanc"><i style="width:${Math.round(faits / Math.max(1, l.length) * 100)}%"></i></div>
+  d.innerHTML = `<div class="avanc"><i style="width:${
+      Math.round(faits / Math.max(1, l.length) * 100)}%"></i></div>
     <div class="ecr">
-      <span class="n">${n || "—"}</span>
-      <span class="ad">${a ? `${esc(E.reg.proto)} · U${a.u} · canal ${a.canal}` : "aucun gradateur"}</span>
+      <button class="n" aria-label="Appeler un gradateur par son numéro">${
+        n || "—"}<small>changer</small></button>
+      <span class="ad">${a ? `${esc(E.reg.proto)} · U${a.u} · canal ${a.canal}`
+                           : "aucun gradateur"}</span>
       <input class="cir" inputmode="numeric" placeholder="n° de circuit"
              value="${esc(f.circuit)}" aria-label="Circuit du gradateur ${n || ""}">
     </div>
@@ -317,6 +406,9 @@ function majVoletRelever(){
            aria-label="Repère">
     <div class="jauge"><input type="range" min="0" max="100" value="${lv}" aria-label="Niveau"><b>${lv} %</b></div>`;
 
+  /* Le grand numéro est un bouton : il ouvre le pavé pour sauter à un
+     gradateur précis, ce qu'on ne fait pas en défilant sur deux cents. */
+  d.querySelector(".ecr .n").onclick = () => { pave = ""; majVoletRelever(); };
   const cir = d.querySelector(".cir");
   cir.oninput = () => { f.circuit = cir.value; majListeSeule(); majCompteurs(); };
   cir.onkeydown = e => { if(e.key === "Enter") suivant(); };
@@ -343,23 +435,166 @@ function majVoletRelever(){
   r1.append(prec, saut, noir);
   d.append(r1);
 
-  const r2 = el("div", "rang deux");
+  const r2 = el("div", "rang");
   const plus = el("button", "mini", "+ un gradateur");
+  const sup = el("button", "mini", "Supprimer");
   const fin = el("button", "mini", "Terminer");
-  plus.onclick = () => { E.reg.nb++; allerA(E.reg.nb - 1); };
+  plus.onclick = () => { E.reg.nb++; allerA(gradas().length - 1); };
+  sup.onclick = () => { if(n) supprimerGrada(n); };
   fin.onclick = () => { toutEteindre(E); fermer(); };
-  r2.append(plus, fin);
+  r2.append(plus, sup, fin);
   d.append(r2);
 
   c.replaceChildren(d);
   if(garde){ cir.focus(); try { cir.setSelectionRange(pos, pos); } catch(e){} }
 }
 
+/* Pavé numérique : taper le numéro du gradateur à appeler. Un numéro au-delà
+   de la plage l'allonge, un numéro supprimé le fait revenir. */
+function paveNumerique(){
+  const d = el("div", "pave");
+  d.innerHTML = `<div class="saisie${pave ? "" : " vide"}">${
+    pave || "n° de gradateur"}</div><div class="touches"></div>`;
+  const t = d.querySelector(".touches");
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "✓"].forEach(x => {
+    const b = el("button", x === "✓" ? "acc" : null, x);
+    b.onclick = () => {
+      if(x === "C"){ pave = ""; majVoletRelever(); return; }
+      if(x === "✓"){ validerPave(); return; }
+      if(pave.length < 4) pave += x;
+      vibrer(8); majVoletRelever();
+    };
+    t.append(b);
+  });
+  const retour = el("button", "sec", "Retour");
+  retour.style.gridColumn = "1 / -1";
+  retour.onclick = () => { pave = null; majVoletRelever(); };
+  t.append(retour);
+  return d;
+}
+
+function validerPave(){
+  const n = parseInt(pave, 10);
+  pave = null;
+  if(!n){ majVoletRelever(); return; }
+  const vise = Math.max(E.reg.premier, n);
+  if(vise > E.reg.premier + E.reg.nb - 1) E.reg.nb = vise - E.reg.premier + 1;
+  exclus.delete(vise);
+  allerA(gradas().indexOf(vise));
+}
+
 function suivant(){
   const k = prochainVide(indice + 1);
   if(k != null){ allerA(k); return; }
-  if(indice + 1 < listeGradas(E).length){ allerA(indice + 1); return; }
+  if(indice + 1 < gradas().length){ allerA(indice + 1); return; }
   toutEteindre(E); fermer();
+}
+
+/* ---------------------------- volet : la fiche --------------------------- */
+/* Changer un numéro de circuit, corriger un repère, ou retirer l'élément de
+   la feuille — pour un gradateur comme pour un appareil. */
+function majVoletFiche(){
+  const c = volet.querySelector(".corps");
+  const garde = document.activeElement && document.activeElement.classList.contains("cir");
+  const pos = garde ? document.activeElement.selectionStart : null;
+  const d = el("div");
+
+  if(cible.t === "g"){
+    const n = cible.n;
+    const a = adrGrada(n, E.reg), f = gradaFiche(E, n), lv = E.niv[n] || 0;
+    volet.querySelector(".tete h2").textContent = "Gradateur " + n;
+    volet.querySelector(".tete .cpt").textContent = `${E.reg.proto} · U${a.u} · canal ${a.canal}`;
+    d.innerHTML = `<div class="f"><label>Circuit</label>
+        <input class="cir" inputmode="numeric" value="${esc(f.circuit)}" placeholder="—"
+               aria-label="Circuit du gradateur ${n}"></div>
+      <div class="f"><label>Repère</label>
+        <input class="txt rep" value="${esc(f.note)}" placeholder="face jardin, contre 2…"
+               aria-label="Repère du gradateur ${n}"></div>
+      <div class="info"><span>Adresse DMX</span><b>U${a.u} · ${a.canal}</b></div>
+      <div class="info"><span>Niveau</span><b>${lv} %</b></div>`;
+    d.querySelector(".cir").oninput = e => {
+      f.circuit = e.target.value; majListeSeule(); majCompteurs(); };
+    d.querySelector(".rep").oninput = e => { f.note = e.target.value; majListeSeule(); };
+
+    const r = el("div", "rang");
+    const all = el("button", "act" + (lv > 0 ? "" : " sec"), lv > 0 ? "Éteindre" : "Allumer");
+    const fin = el("button", "act sec", "Terminer");
+    all.onclick = () => {
+      if(lv > 0){ E.niv[n] = 0; poserFlux(E); } else allumerSeuls(E, [n]);
+      rendre();
+    };
+    fin.onclick = () => fermer();
+    r.append(all, fin);
+    d.append(r);
+
+    const sup = el("button", "act sup", "Supprimer ce gradateur");
+    sup.style.marginTop = "8px";
+    sup.style.width = "100%";
+    sup.onclick = () => supprimerGrada(n);
+    d.append(sup);
+  } else {
+    const x = adresser(E.lignes).find(y => y.n === cible.n);
+    if(!x){ fermer(); return; }
+    volet.querySelector(".tete h2").textContent = courtNom(x.app);
+    volet.querySelector(".tete .cpt").textContent = `appareil ${x.n} · U${x.u} · ${x.adr}`;
+    d.innerHTML = `<div class="f"><label>Circuit</label>
+        <input class="cir" inputmode="numeric" value="${esc(circuitApp(E, x.n))}" placeholder="—"
+               aria-label="Circuit de l'appareil ${x.n}"></div>
+      <div class="info"><span>Mode</span><b>${esc(x.mode)} · ${x.ch} canaux</b></div>
+      <div class="info"><span>Adresse</span><b>U${x.u} · ${x.adr} → ${x.fin}</b></div>`;
+    d.querySelector(".cir").oninput = e => {
+      E.affect[x.n] = e.target.value; majListeSeule(); majCompteurs(); };
+
+    const r = el("div", "rang");
+    const fin = el("button", "act sec", "Terminer");
+    fin.onclick = () => fermer();
+    r.append(fin);
+    d.append(r);
+
+    const sup = el("button", "act sup", "Supprimer cet appareil");
+    sup.style.marginTop = "8px";
+    sup.style.width = "100%";
+    sup.onclick = () => supprimerAppareil(x);
+    d.append(sup);
+    d.append(el("p", "aide",
+      "Retirer un appareil enlève un exemplaire à sa ligne : les appareils suivants " +
+      "remontent d'un cran dans l'adressage."));
+  }
+
+  c.replaceChildren(d);
+  if(garde){ const i = d.querySelector(".cir");
+    i.focus(); try { i.setSelectionRange(pos, pos); } catch(e){} }
+}
+
+function supprimerGrada(n){
+  exclus.add(n);
+  delete E.grada[n];
+  delete E.niv[n];
+  if(E.sel === n) E.sel = 0;
+  poserFlux(E);
+  /* Le relevé continue là où il en était, sur le gradateur suivant. */
+  if(ouvert === "relever"){
+    indice = Math.min(indice, gradas().length - 1);
+    rendre();
+    if(gradas()[indice]) allerA(indice);
+  } else fermer();
+}
+
+function supprimerAppareil(x){
+  const l = E.lignes.find(y => y.id === x.ligne);
+  if(l){
+    l.nb = Math.max(0, l.nb - 1);
+    if(!l.nb) E.lignes = E.lignes.filter(y => y.id !== l.id);
+  }
+  /* Les circuits sont attachés au rang de l'appareil : ce qui suit remonte. */
+  const suite = {};
+  Object.keys(E.affect).forEach(k => {
+    const i = +k;
+    if(i < x.n) suite[i] = E.affect[k];
+    else if(i > x.n) suite[i - 1] = E.affect[k];
+  });
+  E.affect = suite;
+  fermer();
 }
 
 /* ---------------------- volet : ajouter des appareils -------------------- */
@@ -377,6 +612,70 @@ function majVoletAjouter(){
   fin.onclick = () => fermer();
   d.append(fin);
   c.replaceChildren(d);
+}
+
+/* ------------------------------ impression ------------------------------- */
+/* Une feuille par circuit, plus les deux tableaux. Dans l'application, ce
+   bouton ouvre la boîte d'impression d'Android, qui sait enregistrer en PDF. */
+function imprimer(){
+  construireFeuille();
+  setTimeout(() => window.print(), 30);
+}
+
+function construireFeuille(){
+  const liste = adresser(E.lignes);
+  const releves = gradas().filter(n => circuitGrada(E, n));
+  /* Les gradateurs supprimés ne comptent plus dans les circuits, et un circuit
+     qui n'a plus rien disparaît de la feuille. */
+  const circuits = parCircuit(E)
+    .map(c => ({ ...c, gradas:c.gradas.filter(n => !exclus.has(n)) }))
+    .filter(c => c.gradas.length || c.apps.length);
+  const date = new Date().toLocaleDateString("fr-FR",
+    { day:"2-digit", month:"long", year:"numeric" });
+
+  const tGradas = releves.map(n => {
+    const a = adrGrada(n, E.reg), f = gradaFiche(E, n);
+    return `<tr><td class="num">${n}</td><td class="num">U${a.u}</td>
+      <td class="num">${a.canal}</td><td class="num">${esc(f.circuit)}</td>
+      <td>${esc(f.note || "")}</td></tr>`;
+  }).join("");
+
+  const tCircuits = circuits.map(c => `<tr>
+      <td class="num">${esc(c.circuit)}</td>
+      <td>${esc(E.reperes[c.circuit] || "")}</td>
+      <td class="num">${c.gradas.join(", ") || "—"}</td>
+      <td>${c.apps.map(x => esc(courtNom(x.app)) + " (U" + x.u + "·" + x.adr + ")").join(", ") || "—"}</td>
+    </tr>`).join("");
+
+  const tApps = liste.map(x => `<tr>
+      <td class="num">${x.n}</td><td>${esc(courtNom(x.app))}</td><td>${esc(x.mode)}</td>
+      <td class="num">${x.ch}</td><td class="num">U${x.u}</td>
+      <td class="num">${x.adr} → ${x.fin}</td>
+      <td class="num">${esc(circuitApp(E, x.n) || "—")}</td></tr>`).join("");
+
+  $("#impression").innerHTML = `
+    <h1>${esc(E.nom)}</h1>
+    <div class="meta">${date} · ${esc(E.reg.proto)} · univers ${E.reg.u} ·
+      ${releves.length} gradateurs relevés sur ${gradas().length} ·
+      ${liste.length} appareils · ${puissance(liste)}</div>
+
+    <h2>Gradateurs relevés</h2>
+    <table><thead><tr><th>Gradateur</th><th>Univers</th><th>Canal</th><th>Circuit</th>
+      <th>Repère</th></tr></thead><tbody>${tGradas ||
+      `<tr><td colspan="5">Aucun gradateur relevé.</td></tr>`}</tbody></table>
+
+    <h2>Par circuit</h2>
+    <table><thead><tr><th>Circuit</th><th>Repère</th><th>Gradateurs</th>
+      <th>Appareils</th></tr></thead><tbody>${tCircuits ||
+      `<tr><td colspan="4">Aucun circuit.</td></tr>`}</tbody></table>
+
+    <h2>Appareils</h2>
+    <table><thead><tr><th>N°</th><th>Appareil</th><th>Mode</th><th>Canaux</th><th>Univers</th>
+      <th>Adresse</th><th>Circuit</th></tr></thead><tbody>${tApps ||
+      `<tr><td colspan="7">Aucun appareil.</td></tr>`}</tbody></table>
+
+    <p class="pied">${gradas().length - releves.length} gradateurs sans circuit ne figurent pas
+    dans le premier tableau. Maquette : les valeurs viennent d'un jeu de démonstration.</p>`;
 }
 
 /* ------------------------- rafraîchissements ciblés ---------------------- */
@@ -398,11 +697,12 @@ function majBarre(){
 }
 function majCompteurs(){
   const b = $("#bas button");
-  if(b) b.innerHTML = `<span class="et">Relever gradateurs</span><span class="cpt">${gradasRestants(E)}</span>`;
+  if(b) b.innerHTML =
+    `<span class="et">Relever gradateurs</span><span class="cpt">${restantsG()}</span>`;
   const i = $("#haut .ongl button:last-child em");
-  if(i) i.textContent = gradasRestants(E);
+  if(i) i.textContent = restantsG();
   if(volet && ouvert === "relever"){
-    const l = listeGradas(E), faits = l.length - gradasRestants(E);
+    const l = gradas(), faits = relevesG();
     volet.querySelector(".tete .cpt").textContent = `${faits} / ${l.length} relevés`;
     const a = volet.querySelector(".avanc i");
     if(a) a.style.width = Math.round(faits / Math.max(1, l.length) * 100) + "%";
@@ -414,6 +714,8 @@ function majCompteurs(){
 if(location.hash.includes("plie")) repliee = true;
 rendre();
 if(location.hash.includes("tel")) ouvrir("relever");
+/* #pdf prépare la feuille sans lancer l'impression : de quoi la relire. */
+if(location.hash.includes("pdf")) construireFeuille();
 </script>
 </body>
 </html>

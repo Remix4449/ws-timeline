@@ -31,6 +31,10 @@
 .rg .ac.on{background:var(--tel);border-color:var(--tel);color:#fff}
 .rg .ac.vide{border-style:dashed;color:var(--ink3)}
 .rg.on{background:color-mix(in srgb,var(--tel) 10%,transparent)}
+.rg.cliquable{cursor:pointer}
+.pile>h3 button{border:1.5px solid var(--line);background:var(--bg);border-radius:99px;
+                padding:4px 9px;font:600 10px/1 var(--body);letter-spacing:.06em;
+                text-transform:uppercase;color:var(--ink2)}
 
 .pile{border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--sur);
       margin-bottom:10px}
