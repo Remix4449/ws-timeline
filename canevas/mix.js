@@ -144,31 +144,47 @@ function editeurLignes(E, maj){
 }
 
 /* --------------------- télécommande en barre (D) ------------------------- */
-function barreTele(E, maj){
-  const d = el("div", "tl");
+/* opts = { compact, reduit, onReduire } — `compact` resserre les touches,
+   `reduit` la replie sur une seule ligne (l'essentiel : le gradateur appelé,
+   son niveau, et de quoi éteindre), `onReduire` ajoute le chevron qui bascule
+   entre les deux. Une télécommande repliée rend trois rangées à la liste. */
+function barreTele(E, maj, opts = {}){
+  const d = el("div", "tl" + (opts.compact ? " compact" : "") + (opts.reduit ? " mini" : ""));
   const on = Object.keys(E.niv).filter(k => E.niv[k] > 0);
   const lv = E.sel ? (E.niv[E.sel] || 0) : 0;
   const a = E.sel ? adrGrada(E.sel, E.reg) : null;
   const cir = E.sel ? circuitGrada(E, E.sel) : "";
-  d.innerHTML = `<span class="led${on.length ? " on" : ""}"></span>
-    <span class="ap"><b>${E.sel || "—"}</b><span>${
-      a ? `U${a.u}·${a.canal}${cir ? " · circ. " + esc(cir) : ""}`
-        : on.length ? `${on.length} allumé${on.length > 1 ? "s" : ""}` : "plateau noir"}</span></span>
-    <input type="range" min="0" max="100" value="${lv}" aria-label="Niveau"${E.sel ? "" : " disabled"}>
-    <span class="niv">${lv} %</span>
-    <button data-a="noir">Noir</button><button data-a="full">Full</button>
-    <button data-a="prec" aria-label="Gradateur précédent">◀</button>
-    <button data-a="suiv" aria-label="Gradateur suivant">▶</button>
-    <button data-a="zero">Zéro</button>`;
+  const etat = a ? `U${a.u}·${a.canal}${cir ? " · circ. " + esc(cir) : ""}`
+                 : on.length ? `${on.length} allumé${on.length > 1 ? "s" : ""}` : "plateau noir";
+  const chevron = opts.onReduire
+    ? `<button class="chev" data-a="plier" aria-expanded="${!opts.reduit}"
+               aria-label="${opts.reduit ? "Déplier la télécommande" : "Réduire la télécommande"}"
+       >${opts.reduit ? "⌃" : "⌄"}</button>` : "";
+
+  d.innerHTML = opts.reduit
+    ? `<span class="led${on.length ? " on" : ""}"></span>
+       <span class="ap"><b>${E.sel || "—"}</b><span>${etat}</span></span>
+       <span class="niv">${lv} %</span>
+       <button data-a="noir">Noir</button>${chevron}`
+    : `<span class="led${on.length ? " on" : ""}"></span>
+       <span class="ap"><b>${E.sel || "—"}</b><span>${etat}</span></span>
+       <input type="range" min="0" max="100" value="${lv}" aria-label="Niveau"${E.sel ? "" : " disabled"}>
+       <span class="niv">${lv} %</span>
+       <button data-a="noir">Noir</button><button data-a="full">Full</button>
+       <button data-a="prec" aria-label="Gradateur précédent">◀</button>
+       <button data-a="suiv" aria-label="Gradateur suivant">▶</button>
+       <button data-a="zero">Zéro</button>${chevron}`;
   const niveau = pct => {
     if(!E.sel) return;
     const v = Math.max(0, Math.min(100, Math.round(pct)));
     Object.keys(E.niv).forEach(k => { if(E.niv[k] > 0 || +k === E.sel) E.niv[k] = v; });
     poserFlux(E); maj();
   };
-  d.querySelector("input").oninput = e => niveau(+e.target.value);
+  const gliss = d.querySelector("input");
+  if(gliss) gliss.oninput = e => niveau(+e.target.value);
   const actes = {
     noir:() => niveau(0), full:() => niveau(100),
+    plier:() => opts.onReduire(!opts.reduit),
     prec:() => { allumerSeuls(E, [Math.max(E.reg.premier, (E.sel || E.reg.premier + 1) - 1)]); maj(); },
     suiv:() => { allumerSeuls(E, [Math.min(E.reg.premier + E.reg.nb - 1, (E.sel || E.reg.premier - 1) + 1)]); maj(); },
     zero:() => { toutEteindre(E); maj(); }

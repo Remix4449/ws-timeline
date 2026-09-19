@@ -94,6 +94,28 @@
            font:600 12.5px/1 var(--body);color:var(--ink2);min-width:42px}
 .tl button.on{background:var(--tel);border-color:var(--tel);color:#fff}
 
+/* Touches resserrées : le bandeau tient sur une ligne et rend de la place
+   à la liste, qui est le vrai sujet de l'écran. */
+.tl.compact{gap:6px;padding:7px 10px}
+.tl.compact button{padding:6px 8px;font:600 11.5px/1 var(--body);min-width:34px;border-radius:9px}
+.tl.compact .ap{min-width:92px;gap:6px}
+.tl.compact .ap b{font-size:20px}
+.tl.compact .ap span{font-size:10.5px}
+.tl.compact .niv{font-size:15px;min-width:44px}
+.tl.compact input[type="range"]{height:26px;min-width:84px}
+.tl.compact input[type="range"]::-webkit-slider-runnable-track{height:26px}
+.tl.compact input[type="range"]::-webkit-slider-thumb{width:22px;height:26px}
+.tl.compact input[type="range"]::-moz-range-track{height:26px}
+.tl.compact input[type="range"]::-moz-range-thumb{width:22px;height:26px}
+.tl .chev{min-width:30px;padding:6px 7px;font-size:12px;border-style:dashed}
+
+/* Repliée : une seule ligne, l'essentiel et de quoi éteindre. */
+.tl.mini{flex-wrap:nowrap;padding:5px 10px;gap:8px}
+.tl.mini .ap{flex:1;min-width:0;align-items:baseline}
+.tl.mini .ap b{font-size:19px}
+.tl.mini .ap span{font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl.mini .niv{font-size:14px;min-width:42px}
+
 /* ------------------------- relevé plein écran (B) ------------------------ */
 .fs{position:fixed;inset:0;z-index:100;background:#08090C;color:#EDEFF4;
     display:flex;flex-direction:column;
