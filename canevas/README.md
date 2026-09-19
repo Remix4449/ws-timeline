@@ -41,6 +41,12 @@ liste à trois onglets, les deux actions passant par des volets. Atelier :
 | --- | --- | --- |
 | H | [Onglets](h-onglets.html) | Une liste à trois onglets ; le volet recouvre la liste à moitié au lieu de la remplacer. |
 
+Le canevas H est celui qui a été retenu et affiné : télécommande repliable,
+liste filtrée sur les gradateurs relevés, pavé d'appel, fiches d'édition et de
+suppression, un patch par spectacle, impression A4. Ses ancres de revue :
+`#tel` (relevé), `#patchs` (menu des patchs), `#plie` (télécommande repliée),
+`#pdf` (feuille d'impression préparée).
+
 ## Ce qu'on reproche à l'existant
 
 Relevé sur la version actuelle de l'application (`patch-app/app/src/main/assets/www/index.html`,
