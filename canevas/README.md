@@ -85,7 +85,9 @@ fonctions `vDmx` et `vTel`) :
   n'est envoyé — une page web n'a accès ni aux sockets UDP ni au multicast. Dans
   l'application, ces mêmes gestes passent par `NET.emission()` et
   `Emetteur.java`, qui tient les trames à 30 Hz.
-- **Non enregistré** : recharger une page repart des données de démonstration.
+- **Non enregistré** : recharger une page repart des données de démonstration — sauf le
+  canevas H, dont les patchs sont écrits dans le stockage local de l'appareil et
+  survivent au rechargement (les niveaux, eux, ne sont jamais rejoués au lancement).
 
 Les données d'appareils sont un extrait du parc, avec des modes plausibles.
 

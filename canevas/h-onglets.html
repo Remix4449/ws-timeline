@@ -244,9 +244,58 @@ function nouveauPatch(nom, remplir){
   return p;
 }
 
+/* ----------------------- enregistrement sur le téléphone ------------------ */
+/* Les patchs survivent au rechargement : ils sont écrits dans le stockage
+   local, qui appartient à l'appareil et ne sort jamais de lui. Tout passe par
+   un try/catch — navigation privée, quota plein, stockage refusé : la maquette
+   continue de tourner, simplement sans se souvenir. */
+const CLE = "canevas-h.patchs.v1";
+let minuterie = null;
+
+function sauver(){
+  clearTimeout(minuterie);
+  minuterie = setTimeout(() => {
+    try {
+      localStorage.setItem(CLE, JSON.stringify({
+        i:iPatch,
+        /* Les niveaux ne s'enregistrent pas : on ne rallume pas un plateau au
+           lancement, et l'émission est coupée quand l'écran se ferme. */
+        p:PATCHS.map(p => ({ ...p, exclus:[...p.exclus], niv:{}, sel:0 }))
+      }));
+    } catch(e){ /* rien à faire : la session continue en mémoire */ }
+  }, 300);
+}
+
+function relire(){
+  try {
+    const brut = localStorage.getItem(CLE);
+    if(!brut) return false;
+    const d = JSON.parse(brut);
+    if(!d || !Array.isArray(d.p) || !d.p.length) return false;
+    PATCHS.length = 0;
+    d.p.forEach(p => {
+      p.exclus = new Set(p.exclus || []);
+      p.niv = {}; p.sel = 0;
+      p.reg = { ...REGLAGES_DEFAUT, ...(p.reg || {}) };
+      p.lignes = p.lignes || []; p.grada = p.grada || {};
+      p.affect = p.affect || {}; p.reperes = p.reperes || {};
+      PATCHS.push(p);
+    });
+    iPatch = Math.min(Math.max(0, d.i || 0), PATCHS.length - 1);
+    E = PATCHS[iPatch];
+    return true;
+  } catch(e){ return false; }
+}
+
+function oublier(){
+  try { localStorage.removeItem(CLE); } catch(e){ }
+}
+
 /* Deux spectacles pour la démonstration : une création en cours de relevé, et
-   une reprise dans une autre salle. */
-(function jeuDeDepart(){
+   une reprise dans une autre salle. Ils ne sont posés qu'au premier lancement,
+   avant que le téléphone n'ait quoi que ce soit à raconter. */
+function jeuDeDemonstration(){
+  PATCHS.length = 0;
   const a = nouveauPatch("Création — série 2026", true);
   a.reg.nb = 215;            // la taille d'une vraie salle : c'est ce qui fait la liste
 
@@ -259,8 +308,11 @@ function nouveauPatch(nom, remplir){
   b.grada = { 1:{ circuit:"1", note:"face" }, 2:{ circuit:"1", note:"face" },
               3:{ circuit:"2", note:"contre" } };
   b.affect = { 1:"1", 2:"1" };
+  iPatch = 0;
   E = PATCHS[0];
-})();
+}
+
+if(!relire()) jeuDeDemonstration();
 
 let onglet = "tout";         // tout | app | grada
 let ouvert = null;           // null | relever | ajouter | fiche
@@ -363,6 +415,7 @@ function rendre(){
   if(ouvert === "ajouter") majVoletAjouter();
   if(ouvert === "fiche") majVoletFiche();
   if(ouvert === "patchs") majVoletPatchs();
+  sauver();
 }
 
 /* Deux cents gradateurs dans une liste, personne ne les lit : on n'affiche
@@ -734,6 +787,7 @@ function majVoletPatchs(){
     if(t) t.textContent = E.nom || "Sans titre";
     const p = volet.querySelector(".p.ici b");
     if(p) p.textContent = E.nom || "Sans titre";
+    sauver();
   };
   d.append(f);
 
@@ -793,8 +847,19 @@ function majVoletPatchs(){
   rang.append(neuf, dupl);
   d.append(rang);
   d.append(el("p", "aide",
-    "Maquette : les patchs vivent le temps de la page. Dans l'application ils sont " +
-    "enregistrés sur le téléphone, et l'export PDF porte le nom du patch ouvert."));
+    "Les patchs sont enregistrés sur cet appareil et survivent au rechargement : " +
+    "ils n'en sortent jamais. L'export PDF porte le nom du patch ouvert."));
+  const raz = el("button", "act sec");
+  raz.style.width = "100%";
+  raz.textContent = "Repartir de la démonstration";
+  raz.onclick = () => {
+    if(!confirm("Effacer les patchs enregistrés et revenir aux deux spectacles de démonstration ?")) return;
+    oublier();
+    jeuDeDemonstration();
+    hlApp = null; FLUX.arret();
+    fermer();
+  };
+  d.append(raz);
 
   c.replaceChildren(d);
   if(garde){ const i = d.querySelector(".nom");
@@ -911,6 +976,7 @@ function majListeSeule(){
   if(onglet === "tout" || onglet === "grada") d.append(pileGradas());
   if(onglet === "tout" || onglet === "app") d.append(pileApps(liste));
   $("#liste").replaceChildren(d);
+  sauver();
 }
 function majBarre(){
   const o = $("#haut .ongl");
